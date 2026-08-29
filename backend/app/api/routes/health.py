@@ -3,9 +3,16 @@
 `/health` probes every external dependency (Postgres, MinIO, the configured LLM
 and embedder) and reports a per-check status. It returns HTTP 200 even when
 degraded — orchestrators can decide what to do; humans get a readable picture.
+
+The probes (esp. the LLM reachability check) do real network I/O, so the result
+is memoised for a few seconds: a burst of health checks from a load balancer
+collapses to one probe per dependency per window instead of fanning out.
 """
 
 from __future__ import annotations
+
+import threading
+import time
 
 from fastapi import APIRouter
 from sqlalchemy import text
@@ -22,9 +29,28 @@ from app.services.storage import get_object_store
 
 router = APIRouter(tags=["health"])
 
+_HEALTH_TTL_S = 5.0
+_health_lock = threading.Lock()
+_health_cache: tuple[float, HealthResponse] | None = None
+
 
 @router.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
+    global _health_cache
+    now = time.monotonic()
+    cached = _health_cache
+    if cached is not None and now - cached[0] < _HEALTH_TTL_S:
+        return cached[1]
+    with _health_lock:
+        cached = _health_cache
+        if cached is not None and time.monotonic() - cached[0] < _HEALTH_TTL_S:
+            return cached[1]
+        result = _probe()
+        _health_cache = (time.monotonic(), result)
+        return result
+
+
+def _probe() -> HealthResponse:
     checks: dict[str, str] = {}
     detail: dict[str, str] = {}
 

@@ -30,6 +30,27 @@ def _recompute(ev: AuditEvent, prev_hash: str) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
+def rehash_chain(db: Session) -> dict[str, Any]:
+    """Recompute ``prev_hash`` / ``entry_hash`` for every row in ``seq`` order.
+
+    Repair / migration tool: use it after a canonicalisation change, or to heal a
+    chain that forked before the audit writer serialised concurrent appends. It
+    rewrites history, so it is deliberately not wired into any request path.
+    """
+    rows = db.execute(select(AuditEvent).order_by(AuditEvent.seq)).scalars().all()
+    prev = ""
+    changed = 0
+    for ev in rows:
+        new_hash = _recompute(ev, prev)
+        if ev.prev_hash != (prev or None) or ev.entry_hash != new_hash:
+            ev.prev_hash = prev or None
+            ev.entry_hash = new_hash
+            changed += 1
+        prev = new_hash
+    db.commit()
+    return {"rows": len(rows), "rewritten": changed}
+
+
 def verify_chain(db: Session) -> dict[str, Any]:
     rows = db.execute(select(AuditEvent).order_by(AuditEvent.seq)).scalars().all()
     prev = ""

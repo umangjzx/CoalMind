@@ -67,15 +67,23 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   the installed subset, Devanagari + roman-Hindi classifier keywords, answers returned
   in the question's language, a Hindi sample MIS. `python scripts/dev.py anomalies`.
 
-- **Hardening:** `scripts/eval_extraction.py` (`dev.py eval`) — a DB-free
-  extraction-accuracy benchmark vs `ground_truth/` (classification, field P/R/F1 by
-  digital vs degraded-scan, coverage, effective accuracy after review), wired as a
-  pytest gate. Drove new extraction rules covering every remaining ground-truth field
-  and a `_COL_VAL` fix for values that ran into the next column. Current sample-corpus
-  score: 8/8 classification, F1 = 1.00, 100 % field coverage.
+- **Hardening — extraction accuracy:** `scripts/eval_extraction.py` (`dev.py eval`) —
+  a DB-free benchmark vs `ground_truth/` (classification, field P/R/F1 by digital vs
+  degraded-scan, coverage, effective accuracy after review), wired as a pytest gate.
+  Drove new extraction rules covering every remaining ground-truth field and a
+  `_COL_VAL` fix for values that ran into the next column. Score: 8/8 classification,
+  F1 = 1.00, 100 % field coverage.
+- **Hardening — performance & load:** `scripts/perf_bench.py` (`dev.py perf`) — a
+  latency bench + in-process concurrent load test vs the PRD NFRs (cached answer
+  `< 5 s`, fresh RAG `< 20 s`). Actuals: cached hit p95 **0.12 s**, fresh live-LLM p95
+  **2.9 s**; 16-way concurrent `/query` p95 **~0.4 s**, 0 errors. Exposed & fixed two
+  concurrency bugs: the fastembed embedder thrashed the CPU under load (now: capped
+  ONNX threads + inference lock + embed LRU) and the audit hash-chain forked under
+  concurrent writes (now: a Postgres advisory lock serialises appends;
+  `dev.py audit-rehash` repairs a forked chain). `/health` probes are memoised 5 s.
 
-**Next: perf/load validation, k8s/Helm for MeghRaj + CI, `hin.traineddata` for real
-Devanagari OCR, full ui-ux design pass.**
+**Next: k8s/Helm for MeghRaj + CI, `hin.traineddata` for real Devanagari OCR, full
+ui-ux design pass.**
 
 ## Repository layout
 
@@ -140,13 +148,15 @@ with db / storage / llm / embeddings all green.
 
 ```bash
 python scripts/dev.py up | down | migrate | seed | corpus | api | web | test | lint
-python scripts/dev.py ingest-samples | build-kg | anomalies | eval
+python scripts/dev.py ingest-samples | build-kg | anomalies | eval | perf | audit-rehash
 ```
 
 `dev.py eval` scores classification + field extraction against
 `ml/sample_corpus/ground_truth/` (no DB) — precision / recall / F1 split by digital vs
-degraded-scan, plus "effective accuracy after review". It is also a pytest regression
-gate (`tests/test_extraction_eval.py`).
+degraded-scan, plus "effective accuracy after review". `dev.py perf` runs the latency
+bench + in-process concurrent load test against the PRD performance NFRs. Both are also
+pytest regression gates (`tests/test_extraction_eval.py`, `tests/test_perf.py`).
+`dev.py audit-rehash` recomputes the audit hash-chain (repair / migration tool).
 
 `make` equivalents exist in [`Makefile`](Makefile) for Linux/macOS/WSL.
 

@@ -9,6 +9,7 @@
     python scripts/dev.py ingest-samples  # push ml/sample_corpus/ through the pipeline
     python scripts/dev.py anomalies  # (re)scan the KG for historical-vs-new inconsistencies
     python scripts/dev.py eval       # score classification + field extraction vs ground truth
+    python scripts/dev.py perf       # latency bench + in-process load test vs PRD NFRs
     python scripts/dev.py api       # run the FastAPI dev server (reload)
     python scripts/dev.py web       # run the Vite dev server
     python scripts/dev.py test      # backend pytest
@@ -60,6 +61,10 @@ TASKS = {
     "anomalies": lambda: uv("python", "-c",
                             "from app.services.anomaly import scan_anomalies as s; print(s())"),
     "eval": lambda: uv("python", str(ROOT / "scripts" / "eval_extraction.py")),
+    "perf": lambda: uv("python", str(ROOT / "scripts" / "perf_bench.py")),
+    "audit-rehash": lambda: uv("python", "-c",
+                               "from app.core.db import SessionLocal; from app.audit import "
+                               "rehash_chain as r; d=SessionLocal(); print(r(d)); d.close()"),
     "test": lambda: uv("pytest", "-q"),
     "lint": lambda: (uv("ruff", "check", ".") or run(["npm", "run", "lint"], cwd=FRONTEND)),
 }

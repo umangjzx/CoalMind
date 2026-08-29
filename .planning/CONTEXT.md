@@ -39,6 +39,10 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | Retrieval precision (M7) | `rag/retrieve.match_entities` filters generic name tokens (`block`, `mine`, `reserve`, …) so an entity only matches a question on distinctive tokens |
 | Extraction benchmark | `scripts/eval_extraction.py` (`dev.py eval`, pytest gate `tests/test_extraction_eval.py`) — DB-free: runs corpus through `extract_pages→classify→extract_fields`, scores classification/language, field P/R/F1 (digital vs degraded), coverage vs `GT_ALIASES`, and *effective accuracy after review* = 1−(silent_error+silent_miss)/N. Gate: class ≥85%, digital F1 ≥0.90, zero silent errors/misses |
 | Extraction rules | table-driven regex `Spec`s per doc_type (`extraction/rules.py`); `_COL_VAL` value pattern stops at line end / 2-space gap / next inline `Label :` (pdfplumber collapses column whitespace); benchmark-driven coverage of every extractable ground-truth field incl. `coal_production_target`/`_achievement_pct`, `finding` (1st observation), `seams_intersected`, block-derived + prose-derived `mine_name` |
+| Perf / load | `scripts/perf_bench.py` (`dev.py perf`, pytest gate `tests/test_perf.py`) — latency bench (service layer, warm embedder) + in-process ASGI concurrent load test. PRD NFR: cached <5s / fresh RAG <20s; actuals cached p95 ~0.1s, fresh live-LLM p95 ~3s, 16-way `/query` p95 ~0.4s @ 0 errors |
+| Embedder concurrency | `FastEmbedEmbedder` is a global singleton — capped ONNX threads (`FASTEMBED_THREADS`, default cpu//2), an inference `threading.Lock`, and a thread-safe LRU (2048) on single-text embeds. Without this, concurrent `/query` thrashed the CPU (p50 376s → 0.5s) |
+| Audit concurrency | `record_event` takes a txn-scoped `pg_advisory_xact_lock` before reading the chain tip so concurrent writers can't fork the hash-chain; `rehash_chain()` (`dev.py audit-rehash`) repairs a forked/legacy chain |
+| `/health` | dependency probes (incl. live LLM reachability) memoised 5s so a poll storm collapses to one probe per window |
 | Deploy | docker-compose (dev); k8s/Helm for on-prem / MeghRaj (deferred, post-M7) |
 
 ## Heavy-dependency policy

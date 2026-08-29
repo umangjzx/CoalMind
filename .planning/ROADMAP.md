@@ -391,4 +391,42 @@ Devanagari OCR; full ui-ux-pro-max design-system pass across all screens.
   **zero silent errors / misses**, effective accuracy ≥ 0.95, **coverage ≥ 0.95**.
   Current sample-corpus score: **8/8 classification, F1 = 1.00 (digital + degraded),
   coverage 100 %** (46/46 extractable ground-truth fields; annotator meta-notes are
-  filtered). **78 backend tests green.**
+  filtered).
+
+---
+
+## ✅ Hardening — performance & load validation
+
+- `scripts/perf_bench.py` (+ `dev.py perf`): a **latency bench** driving the service
+  layer directly (own DB session, warm embedder) and an **in-process load test**
+  firing concurrent requests at the FastAPI app through an ASGI transport — no
+  network, no external server, so it exercises the real async stack + DB pool.
+  Non-zero exit if any PRD target is missed; `tests/test_perf.py` runs the
+  deterministic (no-live-LLM) subset as a CI gate.
+- **PRD NFR §9 met with wide margin** — cached / verified answer `< 5 s`, fresh RAG
+  `< 20 s`:
+
+  | path | p50 | p95 | budget |
+  |---|---|---|---|
+  | `rag.retrieve` (graph + vector) | 66 ms | 121 ms | 3 s |
+  | `rag.ask` fresh, deterministic (no LLM) | 116 ms | 127 ms | 4 s |
+  | **`rag.ask` cached / verified hit** | **72 ms** | **120 ms** | **5 s (PRD)** |
+  | **`rag.ask` fresh, live LLM (OpenRouter)** | **2.1 s** | **2.9 s** | **20 s (PRD)** |
+  | `anomaly.scan` (full KG) · `report.create` · `audit.verify_chain` | ≤ 105 ms | ≤ 192 ms | — |
+
+  Load, 16 concurrent (deterministic answers): `GET /health` p95 ~1 s @ 40 rps,
+  `POST /query` p95 ~0.4 s @ 43 rps, **0 errors**.
+- **Two real concurrency bugs the load test exposed and fixed:**
+  1. `FastEmbedEmbedder` was a global singleton with an unbounded ONNX thread pool —
+     16 concurrent `/query` requests thrashed the CPU and `POST /query` p50 hit
+     **376 s**. Now: capped ONNX threads (`FASTEMBED_THREADS`, default half the
+     cores), an inference lock, and a small thread-safe LRU on single-text embeds
+     (the RAG cache lookup re-embeds the same question every call). → p50 **474 ms**.
+  2. `record_event` read the hash-chain tip then appended with no serialisation, so
+     concurrent writers forked the chain and `verify_chain` reported a break. Now a
+     transaction-scoped Postgres **advisory lock** (`pg_advisory_xact_lock`)
+     serialises the read-tip → append across all workers. Added `rehash_chain()`
+     (+ `dev.py audit-rehash`) to repair a chain that forked before the fix.
+- `/health` now memoises its dependency probes for 5 s so a load-balancer poll storm
+  collapses to one live LLM/DB/MinIO probe per window (p95 3.8 s → ~1 s under load).
+- **80 backend tests green.**
