@@ -14,6 +14,7 @@ from app.models.knowledge import (
 from app.models.organization import Subsidiary, User, UserRole
 from app.models.query import QAPair, QAStatus
 from app.models.report import Report, ReportStatus, ReportVersion, VersionAuthor
+from app.models.topic import Topic, TopicDoc
 
 __all__ = [
     "AuditEvent",
@@ -32,6 +33,8 @@ __all__ = [
     "ReportStatus",
     "ReportVersion",
     "Subsidiary",
+    "Topic",
+    "TopicDoc",
     "User",
     "UserRole",
     "VersionAuthor",

@@ -332,3 +332,53 @@ export interface QAListResponse {
   items: QAOut[];
   total: number;
 }
+
+// --- M5: topics & word cloud ---
+
+export interface WordItem {
+  term: string;
+  count: number;
+  weight: number;
+}
+
+export interface WordCloudResponse {
+  items: WordItem[];
+  filters: Record<string, string | null>;
+}
+
+export interface TopicOut {
+  id: string;
+  topic_index: number;
+  engine: string;
+  label: string;
+  terms: { term: string; weight: number }[];
+  doc_count: number;
+  summary: string;
+  first_seen: string | null;
+  last_seen: string | null;
+  created_at: string;
+}
+
+export interface TopicDocOut {
+  document_id: string;
+  filename: string;
+  doc_type: string | null;
+  doc_date: string | null;
+  subsidiary_id: string | null;
+  weight: number;
+}
+
+export interface TopicDetail extends TopicOut {
+  documents: TopicDocOut[];
+}
+
+export interface TopicListResponse {
+  items: TopicOut[];
+  engine: string | null;
+  run_id: string | null;
+}
+
+export interface TrendsResponse {
+  buckets: string[];
+  series: { topic_index: number; label: string; counts: number[] }[];
+}

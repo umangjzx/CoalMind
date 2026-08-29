@@ -53,6 +53,8 @@ TASKS = {
     "web": lambda: run(["npm", "run", "dev"], cwd=FRONTEND),
     "ingest-samples": lambda: uv("python", "-m", "app.workers.ingest_cli", "--samples"),
     "build-kg": lambda: uv("python", "-m", "app.workers.ingest_cli", "--build-kg"),
+    "topics": lambda: uv("python", "-c",
+                         "from app.services.topics import rebuild_topics as r; print(r())"),
     "test": lambda: uv("pytest", "-q"),
     "lint": lambda: (uv("ruff", "check", ".") or run(["npm", "run", "lint"], cwd=FRONTEND)),
 }

@@ -203,17 +203,53 @@ temporal `supersedes` reasoning is surfaced from the source text, not walked in 
 
 ---
 
-## ▶ M5 — Module 2: Topic & Word Cloud    (FR-6)
+## ✅ M5 — Module 2: Topic & Word Cloud    (FR-6)
 
-- BERTopic (primary) + scikit-learn LDA (fallback) over domain embeddings.
-- Trend-over-time aggregation by subsidiary / date / doc type.
-- Drill-down: topic → source documents + LLM one-paragraph synthesis of the driver.
-- Multilingual term normalization (khadan / mine / colliery; Hindi–English–transliteration).
-- Frontend: **Topics & Trends** — word cloud + rising/falling timeline + drill-down.
+- Migration `0006_m5_topics`: `topic` (run_id, topic_index, engine, label, `terms`
+  JSONB, doc_count, `summary`, first_seen/last_seen) + `topic_doc` (topic→document,
+  weight). The API always serves the latest `run_id`.
+- `topics/normalize.py` — **multilingual term normalisation**: variant→canonical
+  (khadan / khadaan / colliery / opencast → `mine`; bhandar → `reserve`; utpadan →
+  `production`; roman-Hindi function words) + a domain stoplist (coal, limited, report,
+  subsidiary codes, months…). Devanagari tokens retained.
+- `topics/model.py` — `TopicEngine`: **scikit-learn NMF over TF-IDF** of normalised
+  text (robust on the short 6-doc corpus); **BERTopic** slot is import-guarded and uses
+  the embeddings already in `doc_chunk` when installed + requested, else falls back to
+  NMF. Returns top terms + weighted member docs; every doc lands in its best topic.
+- `topics/wordcloud.py` — `word_frequencies` over chunk text, normalised, filterable by
+  subsidiary / doc_type / since-date; returns `{term, count, weight}`.
+- `topics/synthesize.py` — LLM one-paragraph "what's driving this theme" from the
+  topic's terms + source snippets (deterministic fallback; `COALMIND_NARRATIVE_LLM=0`).
+- `topics/queries.py` — `list_topics`, `topic_documents`, `ensure_summary` (lazy),
+  `trends` (per-topic doc counts bucketed by `document.doc_date` year-month, scopeable).
+- `topics/build.py` — `rebuild_topics` wipes the prior run, fits, persists, audits
+  `topics.rebuilt`.
+- API `/topics`: `GET /wordcloud`, `GET ""` (current set), `GET /trends`,
+  `POST /rebuild?n_topics&engine`, `GET /{id}` (detail + member docs + summary).
+- `dev.py topics` CLI.
+- Frontend **Topics & Trends** (new nav item): weighted **word cloud** (font-size by
+  frequency, doc-type filter), **topic list** (label / terms / doc count / date span),
+  **trends** small-multiples (inline SVG bars per topic per month), **Rebuild topics**,
+  topic drawer (term chips + LLM driver paragraph + linked member documents).
+- Tests: canon/tokenize (folds variants, drops stopwords, keeps Devanagari) + NMF
+  theme separation (unit) + word-cloud type filter, rebuild + trends + audit,
+  lazy summary (DB-backed). **56 backend tests green**; `tsc`/`eslint`/`vite build` green.
+
+**Acceptance:** `dev.py topics` on the 6-doc corpus → 5 NMF topics (reserve/manganiferous,
+production/shortfall, belt-conveyor safety, borehole/seam, parliamentary/subsidiary);
+word cloud shows normalised domain vocab (khadan/colliery folded into "mine"); a topic's
+drill-down gives the `gpt-4o-mini` driver paragraph + its 2 source docs; trends buckets
+the docs by 2019-12 / 2021-04 / 2023-11 / 2024-07.
+
+**Deps:** `scikit-learn`. *(BERTopic/umap/hdbscan not added — heavy C builds on Windows,
+and NMF is better on this corpus size; the BERTopic path activates if it's installed.)*
+
+**Known limits (M6+):** corpus is small so topics ≈ documents; trend timeline is sparse
+(one doc per period); `bertopic` engine option needs the package installed.
 
 ---
 
-## ⬚ M6 — Security, RBAC, Admin, Audit    (FR-9, 10, 12; NFRs)
+## ▶ M6 — Security, RBAC, Admin, Audit    (FR-9, 10, 12; NFRs)
 
 - JWT auth (access/refresh); password hashing; login/session.
 - RBAC per subsidiary + role; row-level scoping enforced on every query/document path.

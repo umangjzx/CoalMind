@@ -17,7 +17,7 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
 - Architecture: [`docs/architecture.md`](docs/architecture.md) · Domain model: [`docs/entity-schema.md`](docs/entity-schema.md)
 - Roadmap & status: [`.planning/ROADMAP.md`](.planning/ROADMAP.md) · Decisions: [`.planning/CONTEXT.md`](.planning/CONTEXT.md)
 
-## Status — M0 + M1 + M2 + M3 + M4 complete
+## Status — M0 + M1 + M2 + M3 + M4 + M5 complete
 
 - **M0 (scaffold):** monorepo, infra, FastAPI skeleton (`/health`, `/version`), LLM &
   embeddings provider abstractions (Ollama default · Anthropic gated by a sovereignty
@@ -45,8 +45,13 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   **declines** rather than guessing when evidence is weak (FR-8); **search-only** if the
   LLM is down. Officer-**verified answers are cached** (embedding cosine lookup, ~0.2 s
   reuse). `/query/*` API + the **Ask CoalMind** chat screen.
+- **M5 (topics & word cloud):** NMF topic modelling (BERTopic-ready) over the corpus,
+  **multilingual term normalisation** (khadan / colliery → mine; Hindi variants) + a
+  domain stoplist, a **word cloud** filterable by subsidiary / type / date, **trend-
+  over-time** buckets, and an LLM one-paragraph "what's driving this" per topic.
+  `/topics/*` API + the **Topics & Trends** screen. `python scripts/dev.py topics`.
 
-**Next: M5 — Word Cloud & Topic Identification.**
+**Next: M6 — Security, RBAC, Admin & Audit.**
 
 ## Repository layout
 

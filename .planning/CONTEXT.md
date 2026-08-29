@@ -26,7 +26,8 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | Background jobs | FastAPI `BackgroundTasks` running `run_pipeline()` → also builds the KG (M1/M2); arq + Redis is the scale swap-in, not yet added |
 | OCR / parse | Tesseract 5.5 + `pytesseract` (fallback), `pdfplumber` text + word bboxes (M1); `camelot` deferred |
 | NER | spaCy `en_core_web_sm` + mining gazetteer, keyword-gated ORG mentions (M1); fine-tuned transformer later |
-| Topic modeling | BERTopic + LDA fallback (M5) |
+| Topic modeling | scikit-learn **NMF** over TF-IDF of normalised text (M5); BERTopic path import-guarded (not installed — heavy C builds on Windows). `topic`/`topic_doc` tables, latest `run_id` served |
+| Term normalisation (M5) | `topics/normalize.py` — variant→canonical (khadan/colliery→mine, bhandar→reserve, roman-Hindi) + domain stoplist; Devanagari retained |
 | Report engine | 4 templates bind KG structure + live `ExtractionField` values; per-figure citations; extractive-first LLM narrative (`get_llm`) w/ deterministic fallback (`COALMIND_NARRATIVE_LLM=0`); confidence gate blocks finalize; append-only `report_version` ai/human + diff (M3) |
 | Report export | **xhtml2pdf** (PDF — pure-python, no GTK) + `python-docx` (DOCX) + HTML (M3); WeasyPrint is the production fidelity upgrade |
 | Faster LLM | point `OLLAMA_BASE_URL` at a GPU-hosted Ollama (e.g. Colab T4 + ngrok/cloudflared tunnel) — config only, no code change |

@@ -6,6 +6,7 @@ import { IngestionPage } from "@/features/ingestion/IngestionPage";
 import { KnowledgePage } from "@/features/knowledge/KnowledgePage";
 import { ReportsPage } from "@/features/reports/ReportsPage";
 import { AskPage } from "@/features/query/AskPage";
+import { TopicsPage } from "@/features/topics/TopicsPage";
 import { PlaceholderPage } from "@/features/PlaceholderPage";
 import { NAV } from "@/app/nav";
 
@@ -14,6 +15,7 @@ const BUILT: Record<string, ReactElement> = {
   "/knowledge": <KnowledgePage />,
   "/reports": <ReportsPage />,
   "/query": <AskPage />,
+  "/topics": <TopicsPage />,
 };
 
 const featureRoutes = NAV.filter((n) => n.to !== "/").map((n) => ({

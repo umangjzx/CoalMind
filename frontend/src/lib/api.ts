@@ -10,6 +10,10 @@ import type {
   QAListResponse,
   QAOut,
   ReportDetailT,
+  TopicDetail,
+  TopicListResponse,
+  TrendsResponse,
+  WordCloudResponse,
   ReportListResponse,
   ReportTemplate,
   ReviewActionKind,
@@ -131,6 +135,21 @@ export const api = {
   queryCache: () => get<QAListResponse>("/query/cache"),
   verifyAnswer: (id: string) => req<QAOut>(`/query/${id}/verify`, { method: "POST" }),
   rejectAnswer: (id: string) => req<QAOut>(`/query/${id}/reject`, { method: "POST" }),
+
+  // --- M5: topics & word cloud ---
+  wordCloud: (p: { subsidiary_id?: string; doc_type?: string; since?: string } = {}) => {
+    const q = new URLSearchParams({ limit: "70" });
+    if (p.subsidiary_id) q.set("subsidiary_id", p.subsidiary_id);
+    if (p.doc_type) q.set("doc_type", p.doc_type);
+    if (p.since) q.set("since", p.since);
+    return get<WordCloudResponse>(`/topics/wordcloud?${q}`);
+  },
+  topics: () => get<TopicListResponse>("/topics"),
+  topicDetail: (id: string) => get<TopicDetail>(`/topics/${id}`),
+  topicTrends: (subsidiary_id?: string) =>
+    get<TrendsResponse>(`/topics/trends${subsidiary_id ? `?subsidiary_id=${subsidiary_id}` : ""}`),
+  rebuildTopics: (nTopics = 5) =>
+    req<TopicListResponse>(`/topics/rebuild?n_topics=${nTopics}`, { method: "POST" }),
 
   // --- M2: knowledge ---
   graphStats: () => get<GraphStats>("/knowledge/stats"),

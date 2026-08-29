@@ -46,7 +46,7 @@ cached answer <5s, fresh RAG <20s.
 
 ## Status
 
-**M0 + M1 + M2 + M3 + M4 complete.**
+**M0 + M1 + M2 + M3 + M4 + M5 complete.**
 - M0: monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton, LLM + embeddings
   provider abstractions, audit writer, baseline migration + seed, sample corpus, React shell.
 - M1: document upload + dedupe, classify → OCR/text extract → rule + NER field extraction
@@ -65,7 +65,12 @@ cached answer <5s, fresh RAG <20s.
   floor (FR-8); search-only degradation when the LLM is down; **verified-answer cache**
   (embedding cosine lookup, officer promote, ~0.2s reuse); `/query/*` API; **Ask
   CoalMind** chat UI.
+- M5: `topic`/`topic_doc` models; multilingual term normalization
+  (khadan/colliery→mine, Hindi variants) + domain stoplist; NMF topic modeling
+  (BERTopic-ready); word-cloud frequencies filterable by subsidiary/type/date;
+  trend-over-time buckets; LLM topic-driver synthesis; `/topics/*` API; **Topics &
+  Trends** UI (word cloud + topic list + trend small-multiples + drill-down).
 
-Next: **M5 — Module 2: Topic & Word Cloud** (BERTopic/LDA over domain embeddings,
-trend-over-time, drill-down, multilingual term normalization). Roadmap:
+Next: **M6 — Security, RBAC, Admin, Audit** (JWT auth, per-subsidiary row scoping,
+admin console, hash-chain verification, hard sovereignty enforcement). Roadmap:
 [`ROADMAP.md`](ROADMAP.md).
