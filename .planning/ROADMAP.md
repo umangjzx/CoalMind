@@ -375,11 +375,20 @@ Devanagari OCR; full ui-ux-pro-max design-system pass across all screens.
   0.5 % numeric tolerance, date-parse-and-compare, and abbrev-aware token-subset for
   text (so "Kusmunda OC" ≡ "Kusmunda Opencast").
 - Fixes it surfaced: `mine_name` / `block_name` rules were greedy across column gaps
-  ("Nigahi Opencast    Date : …") → new `_COL_VAL` pattern stops at a 2-space gap /
-  newline; the degraded-scan ground truth was a paraphrase, not the literal subject
-  line, and was missing `reference_no` / `letter_date` / revised+superseded figures.
+  — pdfplumber collapses the whitespace so "Mine : Nigahi Opencast Date : 14.11.2023"
+  was captured whole → new `_COL_VAL` pattern stops at the line end, a 2-space gap, or
+  the next inline `Label :` (same fix applied to the `mention_mine` NER path); the
+  degraded-scan ground truth was a paraphrase not the literal subject line and was
+  missing `reference_no` / `letter_date` / revised+superseded figures.
+- **New rules for every remaining gap** (`extraction/rules.py`): `coal_production_target`
+  + `coal_production_achievement_pct` (2nd / 3rd number on the "Coal Production" row),
+  `question_topic` (parliamentary), `finding` (first numbered observation on an
+  inspection note), `seams_intersected` + a `mine_name` derived from the block name
+  ("Talcher Expansion Block-A" → Talcher) for borehole logs, and a prose `mine_name`
+  ("… at Wani North is revised …") for correspondence. Low-confidence derivations
+  (0.62–0.72) land in the review queue by design.
 - `tests/test_extraction_eval.py` gates it: classification ≥ 85 %, digital F1 ≥ 0.90,
-  **zero silent errors / misses**, effective accuracy ≥ 0.95. Current sample-corpus
-  score: **8/8 classification, digital & degraded F1 = 1.00, coverage 81 %**
-  (9 ground-truth fields — `target_lakh_te`, `achievement_pct`, `question_topic`,
-  `seams_intersected`, … — are not yet targeted by a rule). **78 backend tests green.**
+  **zero silent errors / misses**, effective accuracy ≥ 0.95, **coverage ≥ 0.95**.
+  Current sample-corpus score: **8/8 classification, F1 = 1.00 (digital + degraded),
+  coverage 100 %** (46/46 extractable ground-truth fields; annotator meta-notes are
+  filtered). **78 backend tests green.**

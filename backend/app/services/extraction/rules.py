@@ -21,9 +21,11 @@ from app.services.extraction.types import FieldCandidate
 from app.services.ingestion.page_extract import Page
 
 _NUM = r"(\d[\d,]*\.?\d*)"
-# a labelled value that runs to the end of the line OR to the next column (2+ spaces),
-# so "Mine : Nigahi Opencast        Date : 14.11.2023" yields just "Nigahi Opencast".
-_COL_VAL = r"([^\n]{3,60}?)(?=\s{2,}|\n|$)"
+# a labelled value that ends at the line end, a column gap (2+ spaces), or the
+# next inline label ("... :"), so a line packing two "Label : value" pairs like
+# "Mine : Nigahi Opencast Date : 14.11.2023" yields just "Nigahi Opencast"
+# (pdfplumber collapses the column whitespace to a single space).
+_COL_VAL = r"([^\n]{3,60}?)(?=\s+[A-Z][A-Za-z]{2,}\s*:|\s{2,}|\n|$)"
 
 
 @dataclass(slots=True)
@@ -65,9 +67,15 @@ SPECS: dict[str, list[Spec]] = {
              rf"block\s*[:\-]\s*{_COL_VAL}", kind="text", entity_type="Block", base_conf=0.8),
     ],
     "monthly_production_mis": [
+        Spec("coal_production_target", "Coal production (target)",
+             rf"coal production[^\n]*?{_NUM}", unit="lakh_tonnes",
+             entity_type="ProductionFigure", base_conf=0.86),
         Spec("coal_production_actual", "Coal production (actual)",
              rf"coal production[^\n]*?{_NUM}\s+{_NUM}", unit="lakh_tonnes",
              entity_type="ProductionFigure", base_conf=0.88),
+        Spec("coal_production_achievement_pct", "Coal production (achievement %)",
+             rf"coal production[^\n]*?{_NUM}\s+{_NUM}\s+{_NUM}", unit="percent",
+             base_conf=0.82),
         Spec("ob_removal_actual", "OB removal (actual)",
              rf"ob removal[^\n]*?{_NUM}\s+{_NUM}", unit="lakh_cubic_metre",
              entity_type="ProductionFigure", base_conf=0.85),
@@ -89,6 +97,8 @@ SPECS: dict[str, list[Spec]] = {
              kind="date", base_conf=0.9),
         Spec("subject", "Subject",
              r"subject\s*[:\-]\s*([^\n]{5,140})", kind="text", base_conf=0.8),
+        Spec("question_topic", "Question topic",
+             r"(?:subject|regarding|re)\s*[:\-]\s*([^\n]{5,140})", kind="text", base_conf=0.78),
         Spec("cil_production", "CIL coal production",
              rf"cil (?:coal )?production[^\n]*?{_NUM}\s*mt", unit="million_tonnes",
              entity_type="ProductionFigure", base_conf=0.85),
@@ -104,6 +114,8 @@ SPECS: dict[str, list[Spec]] = {
              kind="date", base_conf=0.85),
         Spec("area", "Area inspected",
              r"area\s*[:\-]\s*([^\n]{3,80})", kind="text", base_conf=0.75),
+        Spec("finding", "Primary observation / finding",
+             r"observations?\s*:?\s+1[.)]\s+([^\n]{10,150})", kind="text", base_conf=0.72),
         Spec("risk_rating", "Risk rating",
              r"risk rating\s*[:\-]?\s*(high|medium|low|critical)", kind="text", base_conf=0.9),
         Spec("action_due", "Compliance / action due",
@@ -123,6 +135,12 @@ SPECS: dict[str, list[Spec]] = {
              kind="date", base_conf=0.88),
         Spec("block_name", "Block",
              rf"block\s*[:\-]\s*{_COL_VAL}", kind="text", entity_type="Block", base_conf=0.8),
+        Spec("mine_name", "Mine / project (from block)",
+             r"block\s*[:\-]\s*([A-Z][A-Za-z]+)\s+(?:expansion|extension|incline|opencast|ocp)\b",
+             kind="text", entity_type="Mine", base_conf=0.7),
+        Spec("seams_intersected", "Seams intersected",
+             rf"{_NUM}\s+(?:workable\s+|coal\s+)?seams?\s+(?:were\s+)?intersected",
+             base_conf=0.82),
         Spec("core_recovery_pct", "Core recovery",
              rf"core recovery\s*{_NUM}\s*%", unit="percent", base_conf=0.8),
     ],
@@ -139,6 +157,10 @@ SPECS: dict[str, list[Spec]] = {
              entity_type="Reserve", base_conf=0.75),
         Spec("superseded_value", "Superseded figure",
              rf"to\s*{_NUM}\s*mt", unit="million_tonnes", entity_type="Reserve", base_conf=0.6),
+        Spec("mine_name", "Mine / area (from prose)",
+             r"\bat\s+([A-Z][a-z]+(?:\s+(?:North|South|East|West|OCP|Colliery|Extension))?)"
+             r"\s+(?:is|was|has|colliery|mine)",
+             kind="text", entity_type="Mine", base_conf=0.62),
     ],
 }
 

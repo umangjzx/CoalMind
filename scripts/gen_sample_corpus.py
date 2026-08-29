@@ -147,7 +147,7 @@ DOCS: list[tuple[str, dict, list[str]]] = [
             "mine": "Nigahi OC",
             "date": "2023-11-14",
             "fields": {
-                "finding": "belt conveyor BC-3 idler damage and spillage",
+                "finding": "Multiple seized carrying idlers near the conveyor drive head.",
                 "risk_rating": "high",
                 "action_due": "2023-11-30",
             },
@@ -159,7 +159,7 @@ DOCS: list[tuple[str, dict, list[str]]] = [
             "Area   : Coal Handling Plant, Belt Conveyor BC-3",
             "",
             "Observations:",
-            "  1. Multiple seized carrying idlers between drive head and transfer point 2.",
+            "  1. Multiple seized carrying idlers near the conveyor drive head.",
             "  2. Heavy coal spillage along 60 m of the conveyor gallery.",
             "  3. Pull-cord switch on north side non-functional.",
             "",

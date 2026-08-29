@@ -96,8 +96,13 @@ def topic_corpus(db_or_skip):
 def test_word_frequencies_filter_by_type(db_or_skip, topic_corpus):
     from app.services.topics import word_frequencies
 
-    allw = {i["term"] for i in word_frequencies(db_or_skip)}
-    assert "conveyor" in allw and "reserve" in allw and "coal" not in allw
+    # scope by doc_type so the assertion is robust to whatever else is in the DB
+    insp = {i["term"] for i in word_frequencies(db_or_skip, doc_type="inspection_report")}
+    assert "conveyor" in insp
+    assert "coal" not in insp  # domain stopword is filtered
+
+    resv = {i["term"] for i in word_frequencies(db_or_skip, doc_type="geological_reserve_status")}
+    assert "reserve" in resv
 
     prod = {i["term"] for i in word_frequencies(db_or_skip, doc_type="monthly_production_mis")}
     assert "production" in prod and "conveyor" not in prod

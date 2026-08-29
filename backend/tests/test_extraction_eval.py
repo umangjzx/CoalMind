@@ -53,7 +53,9 @@ def test_effective_accuracy_after_review(report):
     assert report["overall"]["effective_accuracy"] >= 0.95
 
 
-def test_coverage_reported(report):
-    # informational: the rules engine targets a known share of ground-truth fields
-    assert 0.0 < report["overall"]["coverage"] <= 1.0
-    assert report["overall"]["gt_fields_in_scope"] >= 30
+def test_rules_cover_the_ground_truth(report):
+    # the rules engine should target essentially every extractable ground-truth
+    # field (annotator meta-notes are already filtered out of the corpus)
+    o = report["overall"]
+    assert o["coverage"] >= 0.95
+    assert o["gt_fields_in_scope"] >= 44

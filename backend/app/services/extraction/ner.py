@@ -7,6 +7,7 @@ knowledge graph in M2; by confidence they all land in the review queue.
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 
 from app.core.logging import get_logger
@@ -90,7 +91,9 @@ def extract_mentions(pages: list[Page]) -> list[FieldCandidate]:
                           "Subsidiary", page, 0.7))
         for ln in page.lines():
             if looks_like_mine(ln) and ":" in ln:
-                val = ln.split(":", 1)[1].strip()[:60]
+                # stop at the next inline label so "Mine : X   Date : Y" -> "X"
+                val = re.split(r"\s+[A-Z][A-Za-z]{2,}\s*:", ln.split(":", 1)[1].strip())[0]
+                val = val.strip()[:60]
                 if val:
                     add(_cand("mention_mine", "Mine (mention)", val, "Mine", page, 0.55))
         if nlp is not None:
@@ -103,6 +106,4 @@ def extract_mentions(pages: list[Page]) -> list[FieldCandidate]:
 
 
 def _word_present(text: str, token: str) -> bool:
-    import re
-
     return re.search(rf"\b{re.escape(token)}\b", text) is not None

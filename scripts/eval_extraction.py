@@ -62,22 +62,28 @@ GT_ALIASES: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "monthly_production_mis": {
         "coal_production_lakh_te": ("coal_production_actual",),
+        "target_lakh_te": ("coal_production_target",),
+        "achievement_pct": ("coal_production_achievement_pct",),
         "overburden_removal_lakh_cum": ("ob_removal_actual",),
         "mine": ("mine_name", "mention_mine"),
     },
     "borehole_log_summary": {
         "borehole_id": ("borehole_id", "mention_borehole_id"),
         "total_depth_m": ("total_depth_m",),
+        "seams_intersected": ("seams_intersected",),
         "block": ("block_name",),
+        "mine": ("mine_name", "mention_mine"),
         "principal_seam": ("mention_seam",),
     },
     "inspection_report": {
+        "finding": ("finding",),
         "risk_rating": ("risk_rating",),
         "action_due": ("action_due",),
         "date": ("inspection_date",),
         "mine": ("mine_name", "mention_mine"),
     },
     "parliamentary_qa_response": {
+        "question_topic": ("question_topic", "subject"),
         "cil_production_mt_fy24": ("cil_production",),
         "cil_target_mt_fy24": ("cil_target",),
         "date": ("answer_date",),
@@ -85,6 +91,7 @@ GT_ALIASES: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "correspondence": {
         "subject": ("subject",),
+        "mine": ("mine_name", "mention_mine"),
         "reference_no": ("reference_no",),
         "letter_date": ("letter_date",),
         "revised_value": ("revised_value",),
@@ -101,6 +108,9 @@ _ABBREV = {
 # top-level ground-truth keys that describe an extractable field (the rest -
 # fields{} - is nested)
 _TOPLEVEL_FIELD_KEYS = ("mine", "block", "as_on", "date", "reference")
+
+# ground-truth keys that are annotator commentary, not values to be extracted
+_META_FIELD_KEYS = frozenset({"note"})
 
 
 @dataclass(slots=True)
@@ -223,7 +233,7 @@ def _flatten_gt(gt: dict) -> dict[str, object]:
         if k in gt:
             out[k] = gt[k]
     out.update(gt.get("fields", {}))
-    return out
+    return {k: v for k, v in out.items() if k not in _META_FIELD_KEYS}
 
 
 def score_document(path: Path, gt: dict, *, threshold: float) -> DocResult:

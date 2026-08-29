@@ -70,8 +70,9 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
 - **Hardening:** `scripts/eval_extraction.py` (`dev.py eval`) — a DB-free
   extraction-accuracy benchmark vs `ground_truth/` (classification, field P/R/F1 by
   digital vs degraded-scan, coverage, effective accuracy after review), wired as a
-  pytest gate. Current sample-corpus score: 8/8 classification, F1 = 1.00, 81 % field
-  coverage.
+  pytest gate. Drove new extraction rules covering every remaining ground-truth field
+  and a `_COL_VAL` fix for values that ran into the next column. Current sample-corpus
+  score: 8/8 classification, F1 = 1.00, 100 % field coverage.
 
 **Next: perf/load validation, k8s/Helm for MeghRaj + CI, `hin.traineddata` for real
 Devanagari OCR, full ui-ux design pass.**
