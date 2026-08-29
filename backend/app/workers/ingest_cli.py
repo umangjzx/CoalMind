@@ -72,9 +72,10 @@ def main(argv: list[str]) -> int:
     if argv and argv[0] in {"--build-kg", "-k"}:
         return _build_kg_all(actor)
     if not argv or argv[0] in {"--samples", "-s"}:
-        paths = sorted(SAMPLES.glob("*.pdf"))
+        exts = ("*.pdf", "*.txt", "*.png", "*.jpg", "*.jpeg", "*.tif", "*.tiff")
+        paths = sorted(p for ext in exts for p in SAMPLES.glob(ext))
         if not paths:
-            print("no sample PDFs — run: python scripts/dev.py corpus")
+            print("no sample docs — run: python scripts/dev.py corpus")
             return 1
     else:
         paths = [Path(a) for a in argv]

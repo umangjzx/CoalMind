@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     admin,
+    anomalies,
     auth,
     health,
     ingestion,
@@ -25,6 +26,7 @@ api_router.include_router(knowledge.router, prefix="/knowledge")
 api_router.include_router(reports.router, prefix="/reports")
 api_router.include_router(query.router, prefix="/query")
 api_router.include_router(topics.router, prefix="/topics")
+api_router.include_router(anomalies.router, prefix="/anomalies")
 api_router.include_router(admin.router, prefix="/admin")
 # M4: api_router.include_router(query.router, prefix="/query")
 # M5: api_router.include_router(topics.router, prefix="/topics")

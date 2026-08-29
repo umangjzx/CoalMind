@@ -470,3 +470,57 @@ export interface ExtractionQuality {
   ocr_page_ratio: number;
   by_doc_type: Record<string, { fields: number; mean_confidence: number }>;
 }
+
+// --- M7: anomaly detection ---
+
+export type AnomalyKindT =
+  | "contradiction"
+  | "revision"
+  | "sum_mismatch"
+  | "out_of_range"
+  | "trend_break";
+export type AnomalySeverityT = "low" | "medium" | "high";
+export type AnomalyStatusT = "open" | "acknowledged" | "resolved" | "dismissed";
+
+export interface AnomalyEvidenceT {
+  document_id: string | null;
+  filename: string | null;
+  page_no: number | null;
+  field_key: string | null;
+  value: number | null;
+  as_on: string | null;
+}
+
+export interface AnomalyOut {
+  id: string;
+  signature: string;
+  kind: AnomalyKindT;
+  severity: AnomalySeverityT;
+  status: AnomalyStatusT;
+  title: string;
+  detail: string;
+  entity_id: string | null;
+  subsidiary_id: string | null;
+  evidence: AnomalyEvidenceT[];
+  reviewed_by_id: string | null;
+  reviewed_at: string | null;
+  note: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnomalyListResponse {
+  items: AnomalyOut[];
+  total: number;
+  open_count: number;
+  by_kind: Record<string, number>;
+  by_severity: Record<string, number>;
+}
+
+export interface AnomalyScanResponse {
+  detected: number;
+  created: number;
+  updated: number;
+  auto_resolved: number;
+  by_kind: Record<string, number>;
+}

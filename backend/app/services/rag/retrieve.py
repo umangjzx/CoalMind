@@ -18,6 +18,14 @@ _NAMED_KINDS = (
 )
 _FACT_PREDICATES = (Predicate.has_reserve, Predicate.produces, Predicate.reported_in)
 
+# structural words that appear in many entity names — matching on these alone links
+# an entity to any question that merely says "block" / "mine" / "reserve".
+_GENERIC_NAME_TOKENS = frozenset({
+    "block", "blocks", "mine", "mines", "opencast", "colliery", "collieries",
+    "project", "underground", "expansion", "seam", "seams", "coalfield",
+    "coalfields", "limited", "area", "reserve", "reserves", "coal", "the",
+})
+
 
 @dataclass(slots=True)
 class Evidence:
@@ -59,8 +67,8 @@ def match_entities(db: Session, question: str, subsidiary_id: uuid.UUID | None) 
         )
     hits: list[KGEntity] = []
     for ent in db.execute(stmt).scalars():
-        key_tokens = _tokens(ent.normalized_key) or _tokens(ent.name)
-        # match if any distinctive token of the entity name appears in the question
+        key_tokens = (_tokens(ent.normalized_key) or _tokens(ent.name)) - _GENERIC_NAME_TOKENS
+        # match only on a *distinctive* token of the entity name (not "block"/"mine"/...)
         if key_tokens & q_tokens:
             hits.append(ent)
     return hits

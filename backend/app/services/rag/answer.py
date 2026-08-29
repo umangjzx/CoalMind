@@ -29,7 +29,9 @@ _SYSTEM = (
     "sources provided. Rules: never state a number, name or date that is not in the "
     "sources; put the matching [n] citation immediately after every figure or claim; "
     "if the sources do not answer the question, reply with exactly the single word "
-    "INSUFFICIENT; be concise (2-5 sentences)."
+    "INSUFFICIENT; be concise (2-5 sentences); reply in the same language as the "
+    "question (Hindi question -> Hindi answer), keeping proper nouns and figures as "
+    "written in the sources."
 )
 
 

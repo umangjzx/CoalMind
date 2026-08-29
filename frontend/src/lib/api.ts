@@ -2,6 +2,9 @@ import { clearSession, getToken } from "./auth";
 import type {
   AdminOverview,
   AdminUserRow,
+  AnomalyListResponse,
+  AnomalyOut,
+  AnomalyScanResponse,
   AskResponse,
   AuditListResponse,
   ChainVerifyResponse,
@@ -214,6 +217,22 @@ export const api = {
     get<TrendsResponse>(`/topics/trends${subsidiary_id ? `?subsidiary_id=${subsidiary_id}` : ""}`),
   rebuildTopics: (nTopics = 5) =>
     req<TopicListResponse>(`/topics/rebuild?n_topics=${nTopics}`, { method: "POST" }),
+
+  // --- M7: anomaly detection ---
+  anomalies: (p: { status?: string; kind?: string; severity?: string; limit?: number } = {}) => {
+    const q = new URLSearchParams({ limit: String(p.limit ?? 100) });
+    if (p.status) q.set("status", p.status);
+    if (p.kind) q.set("kind", p.kind);
+    if (p.severity) q.set("severity", p.severity);
+    return get<AnomalyListResponse>(`/anomalies?${q}`);
+  },
+  scanAnomalies: () => req<AnomalyScanResponse>("/anomalies/scan", { method: "POST" }),
+  reviewAnomaly: (id: string, status: string, note = "") =>
+    req<AnomalyOut>(`/anomalies/${id}/review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, note }),
+    }),
 
   // --- M2: knowledge ---
   graphStats: () => get<GraphStats>("/knowledge/stats"),

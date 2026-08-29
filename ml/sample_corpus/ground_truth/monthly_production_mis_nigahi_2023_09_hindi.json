@@ -1,0 +1,16 @@
+{
+  "doc_type": "monthly_production_mis",
+  "subsidiary": "NCL",
+  "language": "hi",
+  "mine": "Nigahi",
+  "fields": {
+    "coal_production_lakh_te": {
+      "value": 15.2,
+      "unit": "lakh_tonnes"
+    },
+    "target_lakh_te": {
+      "value": 17.0,
+      "unit": "lakh_tonnes"
+    }
+  }
+}

@@ -222,7 +222,74 @@ DOCS: list[tuple[str, dict, list[str]]] = [
             "                                        (Chief Geologist)",
         ],
     ),
+    (
+        # a LATER reserve status for the same block — figures revised down.
+        # This creates a cross-document "revision" anomaly (FR-14).
+        "geological_reserve_status_jhanjra_2023",
+        {
+            "doc_type": "geological_reserve_status",
+            "subsidiary": "ECL",
+            "mine": "Jhanjra",
+            "block": "Jhanjra Block-II",
+            "as_on": "2023-04-01",
+            "fields": {
+                "proved_reserve_mt": {"value": 176.5, "unit": "million_tonnes"},
+                "indicated_reserve_mt": {"value": 61.8, "unit": "million_tonnes"},
+                "inferred_reserve_mt": {"value": 19.4, "unit": "million_tonnes"},
+                "seam": "R-VII",
+                "avg_grade": "G6",
+            },
+        },
+        [
+            "EASTERN COALFIELDS LIMITED  (A subsidiary of Coal India Limited)",
+            "GEOLOGICAL RESERVE STATUS REPORT",
+            "",
+            "Mine / Colliery : Jhanjra Underground Project",
+            "Block           : Jhanjra Block-II",
+            "Principal Seam  : R-VII      Average Grade : G6",
+            "Reserves as on  : 01.04.2023",
+            "",
+            "  Category            Reserve (Million Tonnes)",
+            "  ---------------------------------------------",
+            "  Proved  (Measured)            176.50",
+            "  Indicated                      61.80",
+            "  Inferred                       19.40",
+            "  ---------------------------------------------",
+            "  Total Geological Reserve      257.70",
+            "",
+            "Remarks: Depletion by production FY22-FY23 and boundary re-adjustment.",
+        ],
+    ),
 ]
+
+# --- a Hindi / English document (FR-11). Written as UTF-8 text so it needs no
+#     Devanagari font or Hindi OCR pack to demo.
+HINDI_DOC = (
+    "monthly_production_mis_nigahi_2023_09_hindi",
+    {
+        "doc_type": "monthly_production_mis",
+        "subsidiary": "NCL",
+        "language": "hi",
+        "mine": "Nigahi",
+        "fields": {
+            "coal_production_lakh_te": {"value": 15.2, "unit": "lakh_tonnes"},
+            "target_lakh_te": {"value": 17.0, "unit": "lakh_tonnes"},
+        },
+    },
+    "\n".join([
+        "नॉर्दर्न कोलफील्ड्स लिमिटेड — मासिक उत्पादन विवरण",
+        "",
+        "खान (Mine): Nigahi Opencast",
+        "माह (Month): September 2023",
+        "",
+        "  पैरामीटर                     लक्ष्य     वास्तविक",
+        "  Coal Production (Lakh Te)      17.00      15.20",
+        "  Achievement (%)                  -        89.4",
+        "",
+        "टिप्पणी: भारी वर्षा के कारण कोयला उत्पादन में कमी रही। "
+        "क्रशर संयंत्र की मरम्मत के कारण दो दिन कार्य बाधित रहा।",
+    ]),
+)
 
 
 def main() -> int:
@@ -233,7 +300,15 @@ def main() -> int:
         mono = "scanned" in name or gt.get("quality") == "degraded_scan"
         make_pdf(name, lines, mono=mono)
         (GT / f"{name}.json").write_text(json.dumps(gt, indent=2), encoding="utf-8")
-    print(f"done: {len(DOCS)} PDFs + ground-truth JSON")
+
+    # Hindi/English doc — plain UTF-8 text (reportlab has no Devanagari font).
+    h_name, h_gt, h_text = HINDI_DOC
+    (OUT / f"{h_name}.txt").write_text(h_text + "\n", encoding="utf-8")
+    (GT / f"{h_name}.json").write_text(json.dumps(h_gt, indent=2, ensure_ascii=False),
+                                      encoding="utf-8")
+    print(f"  wrote sample_corpus/{h_name}.txt")
+
+    print(f"done: {len(DOCS)} PDFs + 1 text doc + ground-truth JSON")
     return 0
 
 

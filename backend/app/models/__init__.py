@@ -2,6 +2,12 @@
 (Alembic autogenerate and ``Base.metadata.create_all`` both rely on that).
 """
 
+from app.models.anomaly import (
+    Anomaly,
+    AnomalyKind,
+    AnomalySeverity,
+    AnomalyStatus,
+)
 from app.models.audit import AuditEvent
 from app.models.document import Document, DocumentStatus, ExtractionField, FieldStatus
 from app.models.knowledge import (
@@ -17,6 +23,10 @@ from app.models.report import Report, ReportStatus, ReportVersion, VersionAuthor
 from app.models.topic import Topic, TopicDoc
 
 __all__ = [
+    "Anomaly",
+    "AnomalyKind",
+    "AnomalySeverity",
+    "AnomalyStatus",
     "AuditEvent",
     "DocChunk",
     "Document",

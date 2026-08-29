@@ -17,7 +17,7 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
 - Architecture: [`docs/architecture.md`](docs/architecture.md) · Domain model: [`docs/entity-schema.md`](docs/entity-schema.md)
 - Roadmap & status: [`.planning/ROADMAP.md`](.planning/ROADMAP.md) · Decisions: [`.planning/CONTEXT.md`](.planning/CONTEXT.md)
 
-## Status — M0 + M1 + M2 + M3 + M4 + M5 + M6 complete
+## Status — M0 + M1 + M2 + M3 + M4 + M5 + M6 + M7 complete
 
 - **M0 (scaffold):** monorepo, infra, FastAPI skeleton (`/health`, `/version`), LLM &
   embeddings provider abstractions (Ollama default · Anthropic gated by a sovereignty
@@ -57,8 +57,18 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   (platform counts, security posture, user CRUD, audit log, extraction-quality metrics);
   hard `ALLOW_THIRD_PARTY_API=false` enforcement (LLM → on-prem-only, degrades
   gracefully). Login screen + token store in the frontend.
+- **M7 (anomaly detection + Hindi):** cross-document comparison of knowledge-graph
+  facts flags **inconsistencies between historical and new data** for the same entity
+  (FR-14) — `revision`, `contradiction`, `sum_mismatch`, `out_of_range`, `trend_break`
+  — each traceable to its source `{document, page, field, value, as-on}`. Idempotent
+  `scan_anomalies` (upsert by signature + auto-resolve), `/anomalies` API (list / scan /
+  review), an **Anomalies** review screen (Acknowledge / Resolve / Dismiss) and a real
+  **Dashboard**. **Hindi / bilingual** (FR-11): `eng+hin` OCR with automatic fallback to
+  the installed subset, Devanagari + roman-Hindi classifier keywords, answers returned
+  in the question's language, a Hindi sample MIS. `python scripts/dev.py anomalies`.
 
-**Next: M7 — Anomaly detection, Hindi end-to-end, benchmarking & deploy.**
+**Next: hardening & deploy — extraction-accuracy benchmark, perf/load validation,
+k8s/Helm for MeghRaj + CI, `hin.traineddata` for real Devanagari OCR.**
 
 ## Repository layout
 
@@ -91,8 +101,9 @@ Set `COALMIND_NARRATIVE_LLM=0` to skip the LLM entirely (deterministic cited pro
 cp .env.example .env          # host Postgres on 5432? .env already maps container -> 5433
 
 python scripts/dev.py bootstrap        # docker compose up + migrate + seed + sample corpus
-python scripts/dev.py ingest-samples   # run the 6 sample docs through the M1 pipeline
+python scripts/dev.py ingest-samples   # run the sample docs (PDF + Hindi .txt) through the M1 pipeline
 python scripts/dev.py build-kg         # (re)build the M2 knowledge graph + vector index
+python scripts/dev.py anomalies        # scan the graph for historical-vs-new inconsistencies (M7)
 python scripts/dev.py api               # FastAPI on http://localhost:8000  (/docs, /health)
 python scripts/dev.py web               # Vite on   http://localhost:5173   (another shell)
 ```
@@ -102,7 +113,13 @@ low-confidence fields) → **Knowledge Graph** (browse the mines/blocks/reserves
 verified facts produced, semantic search) → **Report Builder** (generate a cited,
 confidence-gated Reserve Status / Parliamentary Q&A draft and export it to PDF/DOCX)
 → **Ask CoalMind** (cited answers, declines on low confidence) → **Topics & Trends**
-→ **Admin**.
+→ **Anomalies** (historical-vs-new inconsistencies, traceable to source) → **Admin**.
+
+**Hindi OCR (optional).** `ocr_languages` defaults to `eng+hin`; the pipeline probes
+Tesseract and quietly falls back to whatever packs are installed. For real Devanagari
+scans install the Hindi data — e.g. `apt-get install tesseract-ocr-hin`, or drop
+`hin.traineddata` into the Tesseract `tessdata/` dir. The bundled Hindi sample is plain
+UTF-8 text, so it needs neither the pack nor a Devanagari font.
 
 Sign in (top-right) with a demo account — password `coalmind`:
 `admin@coalindia.in` (IT admin), `ministry@coal.gov.in`, `officer@cmpdi.co.in`,

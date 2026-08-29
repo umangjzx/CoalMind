@@ -299,12 +299,61 @@ encryption at rest/in transit is a deployment concern (TLS + DB/MinIO config), n
 
 ---
 
-## ▶ M7 — Anomaly detection, Hindi, hardening, deploy    (FR-11, 14; PRD phases 4–7)
+## ✅ M7 — Anomaly detection + Hindi support    (FR-11, 14; PRD phases 4–7)
 
-- FR-14: anomaly/inconsistency detection between historical and new data per entity.
-- FR-11: Hindi documents + queries end to end (OCR, NER, embeddings, answers).
-- Accuracy benchmarking harness vs `ml/sample_corpus/ground_truth/` (≥90% digital /
-  ≥75% degraded; effective ~99% with review).
-- Performance validation (<5s cached, <20s fresh RAG); load test.
-- k8s / Helm manifests for on-prem / MeghRaj; CI pipeline.
-- Officer usability pass; ui-ux-pro-max full design system applied across all screens.
+- Migration `0008_m7_anomaly`: `anomaly` table (`kind`, `severity`, `status`, `title`,
+  `detail`, `entity_id`→`kg_entity`, `subsidiary_id`, `evidence` JSONB, reviewer +
+  `note`) with a unique `signature` for idempotent upsert; 3 enums.
+- **FR-14 anomaly detection** (`services/anomaly/detect.py`): compares knowledge-graph
+  fact nodes (reserves, production figures) for the same anchor entity + category and
+  flags five kinds —
+  `revision` (figure changed across "as-on" dates — historical vs new),
+  `contradiction` (different values for the same period),
+  `sum_mismatch` (proved+indicated+inferred ≠ stated total),
+  `out_of_range` (negative reserve, % outside 0–100, non-positive stripping ratio),
+  `trend_break` (a metric value >2.5σ from the entity's own history).
+  `_diff` ignores <2% / <0.01 rounding noise. Revision/contradiction findings are
+  collapsed to one row per anchor (a report revising 4 category figures → one anomaly,
+  4 evidence pairs). `scan_anomalies()` upserts by `signature` — new rows created,
+  open rows refreshed, open rows that no longer reproduce auto-resolved — and audits
+  `anomaly.scan` with counts by kind.
+- **API** (`/anomalies`): `GET` list (filters: status / kind / severity; sorted
+  open→terminal then severity; returns `open_count` + `by_kind` / `by_severity`
+  rollups; RBAC-scoped to the principal's subsidiary + national), `GET /{id}`,
+  `POST /scan`, `POST /{id}/review` (acknowledge / resolve / dismiss + note, records
+  reviewer + `anomaly.review` audit). `dev.py anomalies` CLI.
+- **FR-11 Hindi / bilingual**: `ocr_languages` setting (`eng+hin`) with a probe that
+  degrades to the installed subset — `page_extract._ocr_lang()` — and a per-call
+  Tesseract fallback to `eng` if a pack fails to load (host here has `eng`/`osd`
+  only); classifier `_RULES` gain Devanagari + roman-Hindi aliases per doc type
+  (खान/भंडार/मासिक उत्पादन/लोक सभा/निरीक्षण …); RAG system prompt now answers in the
+  question's language; sample corpus gains a Hindi/English monthly-production MIS
+  (`monthly_production_mis_nigahi_2023_09_hindi.txt`, UTF-8 — no Devanagari font
+  needed) + a conflicting `geological_reserve_status_jhanjra_2023.pdf` (same block,
+  proved reserve 182.4→176.5 MT) so a real revision anomaly exists to demo.
+- **Retrieval precision fix** (`rag/retrieve.py`): `match_entities` no longer links an
+  entity to a question on generic name tokens ("block", "mine", "reserve", …) — only
+  distinctive tokens — so unrelated blocks stop crowding the cited sources.
+- Frontend: **Anomalies** screen (severity dot, kind badge, collapsible evidence table
+  with per-source `{file, page, field, value, as-on}`, status tabs, Rescan,
+  Acknowledge / Resolve / Dismiss with a note) + `/anomalies` route + nav item;
+  **Dashboard** made real — live corpus / review-queue / KG / topic counts from
+  `/admin/overview` and an "Open anomalies" panel linking through.
+- Tests (`tests/test_anomaly.py`): `_diff` unit; DB-backed cross-document `revision`
+  scan with traceable evidence + no false `sum_mismatch`; idempotent re-scan
+  (`created == 0`); `/anomalies` list + `/{id}/review` status transition. Hindi
+  classifier aliases covered in `test_classifier.py`. **73 backend tests green**;
+  `ruff`, `tsc`, `eslint`, `vite build` green; `0008` migration down/up round-trips.
+
+**Acceptance:** `dev.py ingest-samples` then `dev.py anomalies` → one `revision`
+anomaly, "Jhanjra Block-II: figures revised across reports (4 fields)", evidence citing
+`geological_reserve_status_jhanjra_2021.pdf` vs `…_2023.pdf`; the Anomalies screen shows
+it and Acknowledge/Resolve moves it between tabs; the Hindi MIS ingests, classifies as
+`monthly_production_mis`, and is retrievable.
+
+**Deps:** none added.
+
+**Deferred (post-hackathon):** extraction-accuracy benchmark harness vs
+`ground_truth/`; perf/load validation (<5 s cached, <20 s fresh); k8s / Helm manifests
+for MeghRaj + CI pipeline; installing `hin.traineddata` for real Devanagari OCR;
+full ui-ux-pro-max design-system pass across all screens.

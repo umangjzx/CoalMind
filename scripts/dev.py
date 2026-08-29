@@ -7,6 +7,7 @@
     python scripts/dev.py seed      # load subsidiaries + demo users
     python scripts/dev.py corpus    # generate the synthetic sample corpus
     python scripts/dev.py ingest-samples  # push ml/sample_corpus/ through the pipeline
+    python scripts/dev.py anomalies  # (re)scan the KG for historical-vs-new inconsistencies
     python scripts/dev.py api       # run the FastAPI dev server (reload)
     python scripts/dev.py web       # run the Vite dev server
     python scripts/dev.py test      # backend pytest
@@ -55,6 +56,8 @@ TASKS = {
     "build-kg": lambda: uv("python", "-m", "app.workers.ingest_cli", "--build-kg"),
     "topics": lambda: uv("python", "-c",
                          "from app.services.topics import rebuild_topics as r; print(r())"),
+    "anomalies": lambda: uv("python", "-c",
+                            "from app.services.anomaly import scan_anomalies as s; print(s())"),
     "test": lambda: uv("pytest", "-q"),
     "lint": lambda: (uv("ruff", "check", ".") or run(["npm", "run", "lint"], cwd=FRONTEND)),
 }

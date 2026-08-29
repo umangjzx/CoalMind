@@ -64,6 +64,9 @@ class Settings(BaseSettings):
 
     # --- Extraction ---
     confidence_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
+    # Tesseract OCR languages (FR-11). "eng+hin" reads mixed Hindi/English scans;
+    # falls back to "eng" automatically if a traineddata pack is missing.
+    ocr_languages: str = "eng+hin"
 
     # --- Auth ---
     jwt_secret: str = "dev-only-change-me"

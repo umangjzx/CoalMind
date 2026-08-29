@@ -15,6 +15,7 @@ from __future__ import annotations
 import io
 from dataclasses import dataclass, field
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
 
 log = get_logger(__name__)
@@ -22,6 +23,31 @@ log = get_logger(__name__)
 # a page with fewer than this many text-layer chars is treated as "needs OCR"
 _MIN_TEXT_CHARS = 20
 _OCR_DPI = 200
+
+# cache of Tesseract lang strings we've already proven usable on this host
+_LANG_OK: dict[str, str] = {}
+
+
+def _ocr_lang() -> str:
+    """Resolve the configured OCR language string, degrading to a subset that is
+    actually installed (e.g. ``eng+hin`` -> ``eng`` when the Hindi pack is absent).
+    """
+    want = (get_settings().ocr_languages or "eng").strip() or "eng"
+    if want in _LANG_OK:
+        return _LANG_OK[want]
+    try:
+        import pytesseract
+
+        have = set(pytesseract.get_languages(config=""))
+        usable = [c for c in want.split("+") if c in have] or ["eng"]
+        got = "+".join(usable)
+        if got != want:
+            log.warning("OCR languages %r not all installed; using %r", want, got)
+    except Exception as exc:  # noqa: BLE001 — never let language probing break ingest
+        log.warning("could not probe Tesseract languages (%s); using 'eng'", exc)
+        got = "eng"
+    _LANG_OK[want] = got
+    return got
 
 
 @dataclass(slots=True)
@@ -110,7 +136,18 @@ def _ocr_pil(im, *, page_no: int) -> Page:
 
     if im.mode != "RGB":
         im = im.convert("RGB")
-    data = pytesseract.image_to_data(im, output_type=pytesseract.Output.DICT)
+    lang = _ocr_lang()
+    try:
+        data = pytesseract.image_to_data(
+            im, lang=lang, output_type=pytesseract.Output.DICT
+        )
+    except pytesseract.TesseractError as exc:
+        # a lang pack that get_languages() listed but that still fails to load
+        log.warning("OCR with lang=%r failed (%s); retrying with 'eng'", lang, exc)
+        _LANG_OK[(get_settings().ocr_languages or "eng").strip()] = "eng"
+        data = pytesseract.image_to_data(
+            im, lang="eng", output_type=pytesseract.Output.DICT
+        )
     words: list[Word] = []
     line_parts: dict[tuple, list[str]] = {}
     for j, txt in enumerate(data["text"]):

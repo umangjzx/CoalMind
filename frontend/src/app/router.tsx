@@ -7,6 +7,7 @@ import { KnowledgePage } from "@/features/knowledge/KnowledgePage";
 import { ReportsPage } from "@/features/reports/ReportsPage";
 import { AskPage } from "@/features/query/AskPage";
 import { TopicsPage } from "@/features/topics/TopicsPage";
+import { AnomaliesPage } from "@/features/anomalies/AnomaliesPage";
 import { AdminPage } from "@/features/admin/AdminPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { PlaceholderPage } from "@/features/PlaceholderPage";
@@ -18,6 +19,7 @@ const BUILT: Record<string, ReactElement> = {
   "/reports": <ReportsPage />,
   "/query": <AskPage />,
   "/topics": <TopicsPage />,
+  "/anomalies": <AnomaliesPage />,
   "/admin": <AdminPage />,
 };
 

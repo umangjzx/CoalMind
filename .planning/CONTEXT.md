@@ -32,9 +32,12 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | Report export | **xhtml2pdf** (PDF — pure-python, no GTK) + `python-docx` (DOCX) + HTML (M3); WeasyPrint is the production fidelity upgrade |
 | Faster LLM | point `OLLAMA_BASE_URL` at a GPU-hosted Ollama (e.g. Colab T4 + ngrok/cloudflared tunnel) — config only, no code change |
 | Frontend | React 18 + Vite 6 + TS + Tailwind 3, TanStack Query, React Router |
-| Design | tokens are a neutral baseline now; full **ui-ux-pro-max** design pass in M7 (and per-screen as milestones build UI) |
+| Design | tokens are a neutral baseline; full **ui-ux-pro-max** design pass deferred (post-M7); per-screen styling done as milestones build UI |
 | Auth/RBAC (M6) | bcrypt + HS256 JWT (access/refresh); `Principal` dependency, `AUTH_REQUIRED` flag (dev=false → acts as seeded `data_admin`); `require_roles()`; per-subsidiary row-scoping on documents/review/query; audit hash-chain `verify_chain()`; `/admin/*` console API |
-| Deploy | docker-compose (dev); k8s/Helm for on-prem / MeghRaj (M7) |
+| Anomaly detection (M7) | `app/services/anomaly/detect.py` — compares KG fact nodes for one anchor+category across documents → `revision` / `contradiction` / `sum_mismatch` / `out_of_range` / `trend_break` (FR-14); `_diff` tolerance 2% / 0.01; revision+contradiction collapsed to one row per anchor; `scan_anomalies()` upserts by `signature`, auto-resolves gone ones, audits `anomaly.scan`. `anomaly` table (migration `0008`). `/anomalies` API (list / scan / review), RBAC-scoped. `dev.py anomalies` |
+| Hindi / bilingual (M7, FR-11) | `ocr_languages="eng+hin"` + `page_extract._ocr_lang()` probes Tesseract and degrades to the installed subset, per-call fallback to `eng` on load error (this host has `eng`/`osd` only); `classifier._RULES` carry Devanagari + roman-Hindi aliases; RAG `_SYSTEM` answers in the question's language; Hindi sample = UTF-8 `.txt` (no Devanagari font / `hin` pack needed to demo) |
+| Retrieval precision (M7) | `rag/retrieve.match_entities` filters generic name tokens (`block`, `mine`, `reserve`, …) so an entity only matches a question on distinctive tokens |
+| Deploy | docker-compose (dev); k8s/Helm for on-prem / MeghRaj (deferred, post-M7) |
 
 ## Heavy-dependency policy
 
@@ -44,7 +47,8 @@ milestone that needs them**, never earlier — keeps the base install and CI fas
 ## Local environment (as probed 2026-08-29, dev machine)
 
 - Node 24 / npm 11 (no pnpm) · Python 3.13 available, backend venv pinned to **3.12** ·
-  `uv` 0.11 · git 2.55 · Docker + Compose v5 · Tesseract 5.5.
+  `uv` 0.11 · git 2.55 · Docker + Compose v5 · Tesseract 5.5 (`eng` + `osd` only — **no
+  `hin` pack**; M7 OCR-language probe degrades to `eng` automatically).
 - **Ollama** installed with `mistral:latest` and `qwen2.5-coder:7b` pulled. No embedding
   model pulled → embeddings default to fastembed (no Ollama needed). Optional:
   `ollama pull nomic-embed-text` then set `EMBED_PROVIDER=ollama`.

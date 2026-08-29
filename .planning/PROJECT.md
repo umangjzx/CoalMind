@@ -46,7 +46,7 @@ cached answer <5s, fresh RAG <20s.
 
 ## Status
 
-**M0 + M1 + M2 + M3 + M4 + M5 + M6 complete.**
+**M0 + M1 + M2 + M3 + M4 + M5 + M6 + M7 complete.**
 - M0: monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton, LLM + embeddings
   provider abstractions, audit writer, baseline migration + seed, sample corpus, React shell.
 - M1: document upload + dedupe, classify → OCR/text extract → rule + NER field extraction
@@ -76,6 +76,15 @@ cached answer <5s, fresh RAG <20s.
   tamper detection; **Admin console** (overview, security posture, user CRUD, audit
   log, extraction-quality metrics); hard `ALLOW_THIRD_PARTY_API=false` enforcement
   (LLM → on-prem-only, degrades gracefully); Login + auth store frontend.
+- M7: `anomaly` model + `services/anomaly` — cross-document comparison of KG fact
+  nodes flags `revision` / `contradiction` / `sum_mismatch` / `out_of_range` /
+  `trend_break` (FR-14), idempotent `scan_anomalies` (upsert by signature +
+  auto-resolve), `/anomalies` API (list / scan / review) with RBAC scoping, **Anomalies**
+  review UI + a real **Dashboard**; Hindi/bilingual (FR-11): `eng+hin` OCR with
+  graceful fallback, Devanagari + roman-Hindi classifier aliases, answer-in-question's
+  -language RAG prompt, Hindi sample doc; retrieval-precision fix (no entity match on
+  generic name tokens).
 
-Next: **M7 — Anomaly detection, Hindi end-to-end, benchmarking, k8s/Helm deploy**
-(FR-11, 14; PRD phases 4-7). Roadmap: [`ROADMAP.md`](ROADMAP.md).
+Next: **hardening & deploy** — extraction-accuracy benchmark harness, perf/load
+validation, k8s/Helm manifests for MeghRaj + CI, `hin.traineddata` for real Devanagari
+OCR, full ui-ux-pro-max design pass. Roadmap: [`ROADMAP.md`](ROADMAP.md).
