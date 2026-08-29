@@ -22,6 +22,7 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | LLM | `LLMProvider` protocol → `OllamaProvider` (`mistral`, default; `keep_alive`, ngrok-safe headers) / `AnthropicProvider` / `OpenRouterProvider` (`openai/gpt-4o-mini`) — hosted ones gated by `ALLOW_THIRD_PARTY_API`. `.env` overrides `.env.example` (env_file order fixed). |
 | Embeddings | `Embedder` protocol → `FastEmbedEmbedder` (`BAAI/bge-small-en-v1.5`, 384-d, default) / `OllamaEmbedder` |
 | Knowledge graph | `kg_entity` + `kg_relation` in Postgres (M2); vector store = `doc_chunk` `vector(384)` + HNSW cosine index; built only from `auto_accepted`+`verified` fields |
+| RAG (M4) | `app/services/rag/` — entity→fact retrieval + pgvector passages, role-scoped; extractive-first cited answers, declines below evidence floor (FR-8), search-only if LLM down; `qa_pair` verified-answer cache (embedding cosine ≥0.90 → reuse). `COALMIND_NARRATIVE_LLM=0` forces deterministic composition (tests) |
 | Background jobs | FastAPI `BackgroundTasks` running `run_pipeline()` → also builds the KG (M1/M2); arq + Redis is the scale swap-in, not yet added |
 | OCR / parse | Tesseract 5.5 + `pytesseract` (fallback), `pdfplumber` text + word bboxes (M1); `camelot` deferred |
 | NER | spaCy `en_core_web_sm` + mining gazetteer, keyword-gated ORG mentions (M1); fine-tuned transformer later |

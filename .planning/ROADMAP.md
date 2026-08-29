@@ -160,18 +160,50 @@ reviews scope).
 
 ---
 
-## ▶ M4 — Module 3: Query & Response System    (FR-7, 8, 9)
+## ✅ M4 — Module 3: Query & Response System    (FR-7, 8, 9)
 
-- Graph-aware retrieval (KG lookup + vector search) with role scoping (subsidiary + national).
-- Extractive-first answer composition over retrieved source spans; full source chain.
-- Low-confidence → decline/flag with "what was found", never fabricate (FR-8).
-- Verified-answer cache: officer-approved Q&A pairs promoted for instant reuse (<5s).
-- Graceful degradation to search-only when `get_llm()` raises `LLMUnavailable`.
-- Frontend: **Ask CoalMind** chat — answer + source panel + confidence badges + "verify".
+- Migration `0005_m4_query`: `qa_pair` — every question asked + its answer + evidence
+  trace + `question_embedding vector(384)` (HNSW). `status` = answered / verified /
+  insufficient / rejected; `answer_mode` = rag / search_only / cache; `hit_count`.
+- `rag/retrieve.py` — **graph-aware retrieval**: (a) match named entities in the
+  question → their `has_reserve`/`produces` fact nodes → high-precision `Evidence` with
+  the fact's `source_field_id` (exact traceability); (b) `pgvector` passage search over
+  `doc_chunk`. Role-scoped (`subsidiary_id` + national). Merged, ranked by score.
+- `rag/answer.py` — **extractive-first composition**: LLM constrained to the numbered
+  sources, must keep `[n]` after every figure, must reply `INSUFFICIENT` when they don't
+  answer. **Declines** (`status=insufficient`) below the evidence floor or when only weak
+  passages back it (FR-8). **Search-only mode** (returns ranked sources) when `get_llm()`
+  raises `LLMUnavailable`. Confidence = f(fact score, passage score), flagged below
+  `CONFIDENCE_THRESHOLD`.
+- `rag/cache.py` — **verified-answer cache**: cosine lookup over verified `qa_pair`
+  embeddings (≥0.90 similarity → reuse verbatim, ~0.2 s; well under the <5 s target);
+  `promote_answer` / `reject_answer` (officer), audited.
+- `rag/engine.py` — `ask()`: cache lookup → retrieve → compose → persist; audit
+  `query.{answered,declined,cache_hit,verified,rejected}`.
+- API `/query`: `POST` ask, `GET /history`, `GET /cache`, `GET /{id}`,
+  `POST /{id}/verify`, `POST /{id}/reject`.
+- Frontend **Ask CoalMind** chat (new nav item): question box + examples, answer with
+  clickable `[n]` citation popovers (snippet + relevance + open-source), confidence bar,
+  mode badge (RAG / search-only / verified cache), collapsible source chain,
+  insufficient / low-confidence styling, per-answer **Verify → cache** / **Reject**.
+- Tests: normalize/compose (unit — decline paths, deterministic markers) + fact-backed
+  answer, decline-when-nothing-relevant, cache hit after verify + audit, reject
+  (DB-backed). **50 backend tests green**; `tsc`/`eslint`/`vite build` green.
+
+**Acceptance:** "manganese reserve estimates for Wani North before and after the 2019
+revision" → *"revised from 1.42 MT to 1.15 MT … as stated in the 1998 revision `[1]`.
+There are no further estimates after 2019 in the sources."* (answered the before/after,
+flagged the false 2019 premise, cited, no fabrication). Verify it → paraphrase →
+**cache hit** in ~0.2 s. "Talcher opencast safety status in 2025" → *insufficient*.
+
+**Known limits (M5+):** entity match is token-overlap (no fuzzy/alias); with the LLM
+disabled a topically-adjacent-but-unanswerable question yields a low-confidence
+"answered" rather than a decline (the LLM path returns INSUFFICIENT correctly);
+temporal `supersedes` reasoning is surfaced from the source text, not walked in the graph.
 
 ---
 
-## ⬚ M5 — Module 2: Topic & Word Cloud    (FR-6)
+## ▶ M5 — Module 2: Topic & Word Cloud    (FR-6)
 
 - BERTopic (primary) + scikit-learn LDA (fallback) over domain embeddings.
 - Trend-over-time aggregation by subsidiary / date / doc type.

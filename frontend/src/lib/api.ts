@@ -1,4 +1,5 @@
 import type {
+  AskResponse,
   DiffResponse,
   DocumentDetail,
   DocumentListResponse,
@@ -6,6 +7,8 @@ import type {
   EntityListResponse,
   GraphStats,
   HealthResponse,
+  QAListResponse,
+  QAOut,
   ReportDetailT,
   ReportListResponse,
   ReportTemplate,
@@ -116,6 +119,18 @@ export const api = {
     get<DiffResponse>(`/reports/${id}/diff?from=${from}&to=${to}`),
   reportExportUrl: (id: string, format: "pdf" | "docx" | "html", version?: number) =>
     `${BASE}/reports/${id}/export?format=${format}${version ? `&version=${version}` : ""}`,
+
+  // --- M4: query & response ---
+  ask: (question: string, subsidiary_id?: string) =>
+    req<AskResponse>("/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, subsidiary_id: subsidiary_id ?? null }),
+    }),
+  queryHistory: (limit = 50) => get<QAListResponse>(`/query/history?limit=${limit}`),
+  queryCache: () => get<QAListResponse>("/query/cache"),
+  verifyAnswer: (id: string) => req<QAOut>(`/query/${id}/verify`, { method: "POST" }),
+  rejectAnswer: (id: string) => req<QAOut>(`/query/${id}/reject`, { method: "POST" }),
 
   // --- M2: knowledge ---
   graphStats: () => get<GraphStats>("/knowledge/stats"),

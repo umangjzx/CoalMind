@@ -17,7 +17,7 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
 - Architecture: [`docs/architecture.md`](docs/architecture.md) · Domain model: [`docs/entity-schema.md`](docs/entity-schema.md)
 - Roadmap & status: [`.planning/ROADMAP.md`](.planning/ROADMAP.md) · Decisions: [`.planning/CONTEXT.md`](.planning/CONTEXT.md)
 
-## Status — M0 + M1 + M2 + M3 complete
+## Status — M0 + M1 + M2 + M3 + M4 complete
 
 - **M0 (scaffold):** monorepo, infra, FastAPI skeleton (`/health`, `/version`), LLM &
   embeddings provider abstractions (Ollama default · Anthropic gated by a sovereignty
@@ -40,8 +40,13 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   **block finalisation** until verified. Append-only version history separates **AI vs
   human** edits with a diff. **PDF / DOCX / HTML export**. `/reports/*` API + the
   **Report Builder** screen.
+- **M4 (query & response):** natural-language questions answered from the graph
+  (entity → fact) + `pgvector` passages, role-scoped. **Extractive-first, cited**;
+  **declines** rather than guessing when evidence is weak (FR-8); **search-only** if the
+  LLM is down. Officer-**verified answers are cached** (embedding cosine lookup, ~0.2 s
+  reuse). `/query/*` API + the **Ask CoalMind** chat screen.
 
-**Next: M4 — Query & Response System (graph-aware RAG).**
+**Next: M5 — Word Cloud & Topic Identification.**
 
 ## Repository layout
 

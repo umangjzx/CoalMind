@@ -17,7 +17,7 @@ def test_version_endpoint(client):
     assert r.status_code == 200
     body = r.json()
     assert body["name"] == "coalmind-backend"
-    assert body["llm_provider"] in {"ollama", "anthropic"}
+    assert body["llm_provider"] in {"ollama", "anthropic", "openrouter"}
 
 
 def test_root(client):

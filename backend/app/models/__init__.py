@@ -12,6 +12,7 @@ from app.models.knowledge import (
     Predicate,
 )
 from app.models.organization import Subsidiary, User, UserRole
+from app.models.query import QAPair, QAStatus
 from app.models.report import Report, ReportStatus, ReportVersion, VersionAuthor
 
 __all__ = [
@@ -25,6 +26,8 @@ __all__ = [
     "KGEntity",
     "KGRelation",
     "Predicate",
+    "QAPair",
+    "QAStatus",
     "Report",
     "ReportStatus",
     "ReportVersion",

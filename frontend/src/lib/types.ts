@@ -292,3 +292,43 @@ export interface DiffResponse {
   to: { version_no: number; author_kind: string };
   unified: string;
 }
+
+// --- M4: query & response ---
+
+export type QAStatusT = "answered" | "verified" | "insufficient" | "rejected";
+
+export interface QAEvidence {
+  kind: "fact" | "passage";
+  text: string;
+  score: number;
+  document_id: string | null;
+  document_filename: string | null;
+  page_no: number | null;
+  source_field_id: string | null;
+  entity: string | null;
+}
+
+export interface QAOut {
+  id: string;
+  question: string;
+  answer_md: string;
+  citations: ReportCitation[];
+  evidence: QAEvidence[];
+  confidence: number;
+  status: QAStatusT;
+  answer_mode: "rag" | "search_only" | "cache";
+  subsidiary_id: string | null;
+  verified_at: string | null;
+  hit_count: number;
+  created_at: string;
+}
+
+export interface AskResponse extends QAOut {
+  confidence_threshold: number;
+  from_cache: boolean;
+}
+
+export interface QAListResponse {
+  items: QAOut[];
+  total: number;
+}

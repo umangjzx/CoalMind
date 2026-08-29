@@ -46,7 +46,7 @@ cached answer <5s, fresh RAG <20s.
 
 ## Status
 
-**M0 + M1 + M2 + M3 complete.**
+**M0 + M1 + M2 + M3 + M4 complete.**
 - M0: monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton, LLM + embeddings
   provider abstractions, audit writer, baseline migration + seed, sample corpus, React shell.
 - M1: document upload + dedupe, classify → OCR/text extract → rule + NER field extraction
@@ -60,7 +60,12 @@ cached answer <5s, fresh RAG <20s.
   `ExtractionField` status; per-figure citations; extractive-first LLM narrative with
   deterministic fallback; confidence-gated finalize; AI-vs-human draft history + diff;
   HTML/PDF (xhtml2pdf)/DOCX export; `/reports/*` API; **Report Builder** UI.
+- M4: `qa_pair` model; graph-aware RAG (entity→fact retrieval + pgvector passages,
+  role-scoped); extractive-first cited answers that **decline** below the evidence
+  floor (FR-8); search-only degradation when the LLM is down; **verified-answer cache**
+  (embedding cosine lookup, officer promote, ~0.2s reuse); `/query/*` API; **Ask
+  CoalMind** chat UI.
 
-Next: **M4 — Module 3: Query & Response System** (graph-aware RAG, extractive-first
-cited answers, decline-on-low-confidence, verified-answer cache). Roadmap:
+Next: **M5 — Module 2: Topic & Word Cloud** (BERTopic/LDA over domain embeddings,
+trend-over-time, drill-down, multilingual term normalization). Roadmap:
 [`ROADMAP.md`](ROADMAP.md).
