@@ -64,19 +64,52 @@ here, queue worker is the scale path.
 
 ---
 
-## ▶ M2 — Knowledge layer    (foundation for FR-7)
+## ✅ M2 — Knowledge layer    (foundation for FR-7)
 
-- `kg_entity` + `kg_relation` tables (typed, temporally valid — `valid_from`/`valid_to`).
-- Entity resolution / linking from accepted `ExtractionField` rows → nodes + edges.
-- Chunking + embedding of document text into a `pgvector` index (`Embedder` abstraction).
-- Provenance rows: every node/edge that carries a figure links to its `ExtractionField`
-  (`reported_in` edge with `{document_id, page_no, bbox}`).
-- Graph query helpers: temporal ("as of / before / after"), cross-entity, aggregation.
-- Doc: freeze entity schema against a real CIL template set.
+- Migration `0003_m2_knowledge`: `kg_entity` (typed, get-or-created named entities +
+  document-specific fact nodes, `NULLS NOT DISTINCT` identity, provenance FKs),
+  `kg_relation` (typed predicate, `valid_from`/`valid_to`, provenance), `doc_chunk`
+  (`vector(384)` + HNSW cosine index).
+- `resolver.resolve_document` — turns a doc's **accepted** (`auto_accepted` + `verified`)
+  extraction fields into the graph: Mine/Block/Seam/Mineral/Subsidiary/Report/Inquiry/
+  Finding entities + Reserve/ProductionFigure fact nodes; edges `located_in`, `contains`,
+  `has_reserve`, `produces`, `for_mineral`, `reported_in` (the traceability edge),
+  `responds_to`, `supersedes`, `mentions`. Temporal edges stamped with the "as on" date.
+  Idempotent rebuild (relations + fact nodes wiped per-doc; named entities merged).
+- `chunker` + `indexer.index_document` — sentence-aware overlapping chunks → embed via
+  `get_embedder()` (fastembed bge-small) → upsert `doc_chunk`; embedding failure is
+  non-fatal.
+- `queries` — `search_entities`, `neighbors(as_of=…)`, `document_subgraph`,
+  `vector_search` (cosine, role-scopeable), `graph_stats`.
+- `build.build_knowledge(document_id, reindex=…)` orchestrator + audit `knowledge.built`.
+  Wired into the pipeline (after extraction) and the review endpoint (graph-only rebuild
+  on verify/correct/reject — verified facts flow into the graph, rejected ones drop out).
+- API `/knowledge/*`: `stats`, `entities`, `entities/{id}` (+ `as_of`),
+  `documents/{id}/subgraph`, `search`.
+- Frontend **Knowledge Graph** page (new nav item): live stats, semantic search with
+  example queries + scored chunk hits + source links, entity browser grouped by kind
+  with values/confidence, entity drawer with in/out relation navigation + temporal
+  stamps + provenance link. Plus a compact graph panel in the Ingestion document drawer.
+- CLI: `dev.py build-kg` (`ingest_cli --build-kg`) rebuilds graph + index for all docs.
+- Tests: chunker/normalize (unit) + resolver (builds graph, idempotent, temporal
+  stamping, accepted-only) + neighbors/subgraph (DB-backed). **35 backend tests green**;
+  `tsc`/`eslint`/`vite build` green.
+
+**Acceptance:** `dev.py build-kg` on the 6-doc corpus → 27 entities / 35 relations / 6
+chunks; the reserve doc yields Block `located_in` Mine `located_in` Subsidiary, Block
+`contains` Seam `for_mineral` Coal(G6), 4 Reserve nodes `has_reserve` (valid_from
+2021-04-01) each `reported_in` the Report; semantic search "manganese reserve revision"
+→ the WCL correspondence at score ~0.79; verifying a subsidiary mention in the review
+queue makes the Subsidiary node + `located_in` edge appear.
+
+**Known limits (M3+):** resolver mapping is tuned to the 6 sample doc types (extend
+per real CIL template); no cross-document entity co-reference beyond normalized-name
+match; `supersedes` only fires within one correspondence document; graph has no
+force-directed visual yet (relation list only).
 
 ---
 
-## ⬚ M3 — Module 1: Report Generation Platform    (FR-4, 5, 13)
+## ▶ M3 — Module 1: Report Generation Platform    (FR-4, 5, 13)
 
 - Jinja template engine; 4 templates: Parliamentary Q&A, Geological Reserve Status,
   Monthly Production/MIS, Ad-hoc Inquiry.

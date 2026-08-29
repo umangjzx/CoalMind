@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { FieldOut } from "@/lib/types";
 import { ConfidenceBar, StatusPill } from "@/components/primitives";
+import { DocumentGraph } from "@/features/knowledge/DocumentGraph";
 
 function FieldLine({ f }: { f: FieldOut }) {
   return (
@@ -103,6 +104,8 @@ export function DocumentDrawer({ id, onClose }: { id: string; onClose: () => voi
         <div className="mt-1">
           {data?.fields.map((f) => <FieldLine key={f.id} f={f} />)}
         </div>
+
+        {data && <DocumentGraph documentId={data.id} />}
       </div>
     </div>
   );

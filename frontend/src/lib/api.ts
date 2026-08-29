@@ -1,10 +1,15 @@
 import type {
   DocumentDetail,
   DocumentListResponse,
+  EntityDetail,
+  EntityListResponse,
+  GraphStats,
   HealthResponse,
   ReviewActionKind,
   ReviewQueueResponse,
   ReviewResult,
+  SearchResponse,
+  SubgraphResponse,
   VersionResponse,
 } from "./types";
 
@@ -77,4 +82,20 @@ export const api = {
       },
       body: JSON.stringify(body),
     }),
+
+  // --- M2: knowledge ---
+  graphStats: () => get<GraphStats>("/knowledge/stats"),
+  listEntities: (params: { kind?: string; q?: string; limit?: number } = {}) => {
+    const p = new URLSearchParams();
+    if (params.kind) p.set("kind", params.kind);
+    if (params.q) p.set("q", params.q);
+    p.set("limit", String(params.limit ?? 100));
+    return get<EntityListResponse>(`/knowledge/entities?${p}`);
+  },
+  entityDetail: (id: string, asOf?: string) =>
+    get<EntityDetail>(`/knowledge/entities/${id}${asOf ? `?as_of=${asOf}` : ""}`),
+  documentSubgraph: (documentId: string) =>
+    get<SubgraphResponse>(`/knowledge/documents/${documentId}/subgraph`),
+  semanticSearch: (q: string, k = 8) =>
+    get<SearchResponse>(`/knowledge/search?q=${encodeURIComponent(q)}&k=${k}`),
 };

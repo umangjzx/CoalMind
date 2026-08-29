@@ -33,7 +33,7 @@ export function AppShell() {
             >
               <div className="flex items-center justify-between">
                 <span>{item.label}</span>
-                {item.milestone !== "M0" && (
+                {!item.built && (
                   <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-muted">
                     {item.milestone}
                   </span>

@@ -117,3 +117,78 @@ export interface ReviewResult {
   document_status: DocStatus;
   reviewed_at: string | null;
 }
+
+// --- M2: knowledge layer ---
+
+export interface KGEntity {
+  id: string;
+  kind: string;
+  name: string;
+  normalized_key: string;
+  attrs: Record<string, unknown>;
+  subsidiary_id: string | null;
+  document_id: string | null;
+  source_field_id: string | null;
+  confidence: number;
+  created_at: string;
+}
+
+export interface KGRelation {
+  id: string;
+  src_id: string;
+  dst_id: string;
+  predicate: string;
+  valid_from: string | null;
+  valid_to: string | null;
+  attrs: Record<string, unknown>;
+  document_id: string | null;
+  source_field_id: string | null;
+  confidence: number;
+}
+
+export interface KGNeighbor {
+  direction: "in" | "out";
+  predicate: string;
+  valid_from: string | null;
+  entity: KGEntity;
+  relation_id: string;
+  source_field_id: string | null;
+}
+
+export interface EntityListResponse {
+  items: KGEntity[];
+  total: number;
+}
+
+export interface EntityDetail {
+  entity: KGEntity;
+  neighbors: KGNeighbor[];
+}
+
+export interface SubgraphResponse {
+  entities: KGEntity[];
+  relations: KGRelation[];
+}
+
+export interface ChunkHit {
+  chunk_id: string;
+  document_id: string;
+  document_filename: string;
+  doc_type: string | null;
+  page_no: number | null;
+  text: string;
+  score: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  hits: ChunkHit[];
+}
+
+export interface GraphStats {
+  entities: number;
+  entities_by_kind: Record<string, number>;
+  relations: number;
+  relations_by_predicate: Record<string, number>;
+  chunks: number;
+}

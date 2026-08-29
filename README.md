@@ -28,8 +28,13 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   and `{page, bbox, snippet}` traceability → threshold routing to a **human review
   queue** → business-rule validation → review API + **Ingestion & Review** screen, all
   audited. `python scripts/dev.py ingest-samples` runs the corpus through it.
+- **M2 (knowledge layer):** accepted extractions → a typed, temporally-valid domain
+  **knowledge graph** (`kg_entity`/`kg_relation`) with full provenance, plus a `pgvector`
+  index over document chunks. `/knowledge/*` API, a **Knowledge Graph** screen with
+  entity browser + relation navigation + **semantic search**. Verified review decisions
+  flow into the graph. `python scripts/dev.py build-kg` (re)builds it.
 
-**Next: M2 — Knowledge layer.**
+**Next: M3 — Report Generation Platform.**
 
 ## Repository layout
 
@@ -57,13 +62,15 @@ cp .env.example .env          # host Postgres on 5432? .env already maps contain
 
 python scripts/dev.py bootstrap        # docker compose up + migrate + seed + sample corpus
 python scripts/dev.py ingest-samples   # run the 6 sample docs through the M1 pipeline
+python scripts/dev.py build-kg         # (re)build the M2 knowledge graph + vector index
 python scripts/dev.py api               # FastAPI on http://localhost:8000  (/docs, /health)
 python scripts/dev.py web               # Vite on   http://localhost:5173   (another shell)
 ```
 
-Open **Ingestion & Review** in the app: every sample is classified, its reserve /
-production figures extracted with a confidence score and source citation, and the
-low-confidence fields queued for verification.
+Open **Ingestion & Review**: every sample is classified, its reserve / production
+figures extracted with a confidence score and source citation, low-confidence fields
+queued for verification. Then **Knowledge Graph**: browse the resulting mines / blocks /
+reserves and try the semantic search.
 
 Then open <http://localhost:5173> — the header health badge should read **backend ok**
 with db / storage / llm / embeddings all green.

@@ -52,6 +52,7 @@ TASKS = {
     ),
     "web": lambda: run(["npm", "run", "dev"], cwd=FRONTEND),
     "ingest-samples": lambda: uv("python", "-m", "app.workers.ingest_cli", "--samples"),
+    "build-kg": lambda: uv("python", "-m", "app.workers.ingest_cli", "--build-kg"),
     "test": lambda: uv("pytest", "-q"),
     "lint": lambda: (uv("ruff", "check", ".") or run(["npm", "run", "lint"], cwd=FRONTEND)),
 }

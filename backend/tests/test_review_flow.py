@@ -37,6 +37,11 @@ def review_doc(db_or_skip):
     db.add(field)
     db.commit()
     yield doc, field
+    # a confirm/correct triggers a knowledge rebuild -> clean those rows too
+    from app.models import KGEntity, KGRelation
+
+    db.query(KGRelation).filter_by(document_id=doc.id).delete()
+    db.query(KGEntity).filter_by(document_id=doc.id).delete()
     db.query(ExtractionField).filter_by(document_id=doc.id).delete()
     db.query(Document).filter_by(id=doc.id).delete()
     db.commit()

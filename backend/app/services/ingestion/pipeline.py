@@ -128,5 +128,17 @@ def _process(db: Session, doc: Document, *, actor: str) -> None:
               "ocr_pages": ocr_pages, "notes": doc_notes},
     )
     db.commit()
+
+    # M2: fold the accepted facts into the knowledge graph + embed the text.
+    try:
+        from app.services.knowledge import build_knowledge
+
+        kg = build_knowledge(doc.id, db=db, pages=pages, actor=actor)
+        db.commit()
+        log.info("knowledge built for %s: %s", doc.id, kg)
+    except Exception as exc:  # noqa: BLE001 — extraction already succeeded; KG is best-effort
+        db.rollback()
+        log.warning("knowledge build failed for %s: %s", doc.id, exc)
+
     log.info("pipeline done: %s type=%s fields=%d review=%d status=%s",
              doc.id, doc_type, len(cands), n_review, doc.status)

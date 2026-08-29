@@ -144,6 +144,16 @@ def review_field(
     )
     db.commit()
 
+    # M2: a verified / corrected / rejected field changes which facts are "accepted",
+    # so rebuild this document's graph (text is unchanged -> no re-embedding).
+    try:
+        from app.services.knowledge import build_knowledge
+
+        build_knowledge(field.document_id, db=db, reindex=False, actor=actor)
+        db.commit()
+    except Exception:  # noqa: BLE001 — the review itself already succeeded
+        db.rollback()
+
     return ReviewResult(
         id=field.id,
         status=field.status,

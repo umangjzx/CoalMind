@@ -46,12 +46,17 @@ cached answer <5s, fresh RAG <20s.
 
 ## Status
 
-**M0 + M1 complete.**
+**M0 + M1 + M2 complete.**
 - M0: monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton, LLM + embeddings
   provider abstractions, audit writer, baseline migration + seed, sample corpus, React shell.
 - M1: document upload + dedupe, classify → OCR/text extract → rule + NER field extraction
   with per-field confidence + bbox traceability, threshold routing to a human review
   queue, business-rule validation, review API + **Ingestion & Review** UI, full audit trail.
+- M2: `kg_entity`/`kg_relation` (typed, temporally valid) + `doc_chunk` pgvector index;
+  resolver builds the domain graph from *accepted* extractions with provenance + temporal
+  stamps; chunker + embedder; graph + vector query helpers; `/knowledge/*` API; pipeline
+  + review integration (verified facts flow in); **Knowledge Graph** UI + semantic search.
 
-Next: **M2 — Knowledge layer** (kg_entity/kg_relation + pgvector index). Roadmap:
+Next: **M3 — Module 1: Report Generation Platform** (templates, cited fact assembly,
+confidence-gated finalize, AI-vs-human provenance, PDF/DOCX export). Roadmap:
 [`ROADMAP.md`](ROADMAP.md).

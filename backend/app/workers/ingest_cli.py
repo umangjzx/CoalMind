@@ -2,6 +2,8 @@
 
     uv run python -m app.workers.ingest_cli path/to/file.pdf [more ...]
     uv run python -m app.workers.ingest_cli --samples      # the ml/sample_corpus/ set
+    uv run python -m app.workers.ingest_cli --reprocess     # re-run extraction + KG on all docs
+    uv run python -m app.workers.ingest_cli --build-kg      # rebuild KG + vector index only
 """
 
 from __future__ import annotations
@@ -50,10 +52,25 @@ def _reprocess_all(actor: str) -> int:
     return 0
 
 
+def _build_kg_all(actor: str) -> int:
+    from app.models import Document
+    from app.services.knowledge import build_knowledge
+
+    with SessionLocal() as db:
+        ids = [row[0] for row in db.query(Document.id).all()]
+    print(f"rebuilding knowledge for {len(ids)} document(s)")
+    for doc_id in ids:
+        stats = build_knowledge(doc_id, actor=actor)
+        print(f"  {doc_id} -> {stats}")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     actor = "system"
     if argv and argv[0] in {"--reprocess", "-r"}:
         return _reprocess_all(actor)
+    if argv and argv[0] in {"--build-kg", "-k"}:
+        return _build_kg_all(actor)
     if not argv or argv[0] in {"--samples", "-s"}:
         paths = sorted(SAMPLES.glob("*.pdf"))
         if not paths:

@@ -1,8 +1,10 @@
 # CoalMind AI — Domain Entity Schema
 
 The knowledge graph the query engine reasons over (PRD §6.3). Physical tables
-`kg_entity` and `kg_relation` land in **M2**; this is the target model. Validate against
-real CIL report templates before freezing (PRD closing note).
+`kg_entity` / `kg_relation` / `doc_chunk` landed in **M2** (migration `0003_m2_knowledge`);
+the resolver in `app/services/knowledge/` currently covers the entities/relations marked
+below that the 6 sample doc types produce. Validate against real CIL report templates
+before freezing the rest (PRD closing note).
 
 ## Entities
 
