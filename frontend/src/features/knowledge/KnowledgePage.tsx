@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import type { KGEntity } from "@/lib/types";
 import { entityKindLabel, unitLabel } from "@/lib/labels";
 import { Card, ConfidenceBar, EmptyState } from "@/components/primitives";
+import { GraphView } from "./GraphView";
 import { SemanticSearch } from "./SemanticSearch";
 import { EntityDrawer } from "./EntityDrawer";
 
@@ -63,6 +64,8 @@ export function KnowledgePage() {
       <Card className="p-4">
         <StatsBar />
       </Card>
+
+      <GraphView onSelect={setSelected} />
 
       <SemanticSearch />
 

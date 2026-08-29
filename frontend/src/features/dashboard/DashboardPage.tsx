@@ -1,103 +1,100 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
-import { DEPENDENCY_LABELS, healthWord } from "@/lib/labels";
+import { DEPENDENCY_LABELS, docTypeLabel, healthWord, statusLabel } from "@/lib/labels";
+import { BarList, Donut, Panel } from "@/components/charts";
+import { PipelineFlow } from "./PipelineFlow";
 
 function sum(rec: Record<string, number> | undefined): number {
   return Object.values(rec ?? {}).reduce((a, b) => a + b, 0);
-}
-
-/** A labelled number. Becomes a link when `to` is set. */
-function Stat({
-  label,
-  value,
-  hint,
-  to,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  to?: string;
-}) {
-  const inner = (
-    <>
-      <div className="text-xs uppercase tracking-wide text-muted">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
-      {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
-    </>
-  );
-  const base = "block rounded-lg border border-border bg-surface p-4";
-  return to ? (
-    <Link to={to} className={`${base} transition-colors hover:border-brand`}>
-      {inner}
-    </Link>
-  ) : (
-    <div className={base}>{inner}</div>
-  );
 }
 
 export function DashboardPage() {
   const health = useQuery({ queryKey: ["health"], queryFn: api.health });
   const version = useQuery({ queryKey: ["version"], queryFn: api.version });
   const overview = useQuery({ queryKey: ["admin-overview"], queryFn: api.adminOverview });
+  const quality = useQuery({
+    queryKey: ["admin-quality"],
+    queryFn: api.adminExtractionQuality,
+  });
   const anomalies = useQuery({
     queryKey: ["anomalies", "open"],
     queryFn: () => api.anomalies({ status: "open", limit: 6 }),
   });
 
   const o = overview.data;
-  const n = (x: number | undefined) => (x === undefined ? "—" : String(x));
   const reviewCount = o?.review_queue ?? 0;
   const openAnomalies = anomalies.data?.open_count ?? 0;
   const allClear = !overview.isLoading && reviewCount === 0 && openAnomalies === 0;
 
+  const fs = o?.fields_by_status ?? {};
+  const reviewSegments = [
+    { label: "Confirmed by a person", value: fs.verified ?? 0, color: "rgb(var(--k-6))" },
+    { label: "Accepted automatically", value: fs.auto_accepted ?? 0, color: "rgb(var(--k-1))" },
+    { label: "Waiting for review", value: fs.needs_review ?? 0, color: "rgb(var(--c-warn))" },
+    { label: "Rejected", value: fs.rejected ?? 0, color: "rgb(var(--c-danger))" },
+  ].filter((s) => s.value > 0);
+  const fieldsTotal = sum(fs);
+  const trusted = (fs.verified ?? 0) + (fs.auto_accepted ?? 0);
+
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-sm text-muted">
-          A snapshot of the document collection and anything that needs your attention.
+          The state of the document collection, and anything that needs a person.
         </p>
       </header>
 
-      {/* --- needs your attention: the actionable stuff, first --- */}
+      <PipelineFlow o={o} />
+
+      {/* --- needs your attention --- */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold">Needs your attention</h2>
+        <h2 className="mb-2 text-sm font-semibold">Needs your attention</h2>
         {allClear ? (
-          <div className="rounded-lg border border-border bg-surface p-4 text-sm text-muted">
+          <div className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
             You&rsquo;re all caught up — nothing is waiting for review.
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             <Link
               to="/ingestion"
-              className="rounded-lg border border-border bg-surface p-4 transition-colors hover:border-brand"
+              className="rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand"
             >
               <div className="flex items-baseline justify-between">
                 <span className="text-sm font-medium">Values to review</span>
-                <span className="text-2xl font-semibold tabular-nums text-warn">
-                  {n(o?.review_queue)}
+                <span className="text-3xl font-semibold tabular-nums text-warn">
+                  {reviewCount}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-muted">
-                Extracted with low confidence — confirm, correct, or reject them before
-                they&rsquo;re used in reports or answers.
+              {fieldsTotal > 0 && (
+                <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface-2">
+                  <span
+                    className="block h-full rounded-full bg-ok"
+                    style={{ width: `${Math.round((trusted / fieldsTotal) * 100)}%` }}
+                  />
+                </span>
+              )}
+              <p className="mt-2 text-xs text-muted">
+                {fieldsTotal > 0
+                  ? `${Math.round((trusted / fieldsTotal) * 100)}% of extracted values are cleared. The rest are low-confidence — confirm, correct, or reject them.`
+                  : "Low-confidence values land here for a person to check."}
               </p>
             </Link>
 
             <Link
               to="/anomalies"
-              className="rounded-lg border border-border bg-surface p-4 transition-colors hover:border-brand"
+              className="rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand"
             >
               <div className="flex items-baseline justify-between">
                 <span className="text-sm font-medium">Open anomalies</span>
-                <span className="text-2xl font-semibold tabular-nums">
+                <span className="text-3xl font-semibold tabular-nums">
                   {anomalies.data ? openAnomalies : "—"}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-muted">
-                Figures in new documents that disagree with earlier records for the same
-                mine or block.
+              <p className="mt-2 text-xs text-muted">
+                Figures in newer documents that disagree with earlier records for the
+                same mine or block.
               </p>
               {anomalies.data && anomalies.data.items.length > 0 && (
                 <ul className="mt-2 space-y-1">
@@ -122,79 +119,90 @@ export function DashboardPage() {
         )}
       </section>
 
-      {/* --- the collection --- */}
-      <section>
-        <h2 className="mb-3 text-sm font-semibold">The document collection</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat
-            label="Documents"
-            value={n(sum(o?.documents_by_status))}
-            hint="uploaded & processed"
-            to="/ingestion"
-          />
-          <Stat
-            label="Facts extracted"
-            value={n(o?.kg_entities)}
-            hint={`${n(o?.kg_relations)} links between them`}
-            to="/knowledge"
-          />
-          <Stat
-            label="Reports"
-            value={n(sum(o?.reports_by_status))}
-            hint="drafts & finalised"
-            to="/reports"
-          />
-          <Stat
-            label="Saved answers"
-            value={o ? String(o.qa_by_status?.verified ?? 0) : "—"}
-            hint="officer-verified Q&A"
-            to="/query"
-          />
-        </div>
-      </section>
-
-      {/* --- system status, in plain words --- */}
-      <section className="rounded-lg border border-border bg-surface p-5">
-        <h2 className="text-sm font-semibold">System status</h2>
-        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          {Object.entries(health.data?.checks ?? {}).map(([k, v]) => (
-            <div
-              key={k}
-              className="flex items-center justify-between rounded bg-surface-2 px-3 py-2"
-            >
-              <span>{DEPENDENCY_LABELS[k] ?? k}</span>
-              <span
-                className={
-                  v === "ok"
-                    ? "text-ok"
-                    : v === "blocked"
-                      ? "text-muted"
-                      : v === "down"
-                        ? "text-danger"
-                        : "text-warn"
-                }
-              >
-                {healthWord(v)}
-              </span>
-            </div>
-          ))}
-          {health.isLoading && <div className="text-muted">Checking…</div>}
-          {health.isError && (
-            <div className="text-danger">
-              Can&rsquo;t reach the backend — start it with{" "}
-              <code className="font-mono text-xs">python scripts/dev.py api</code>.
-            </div>
+      {/* --- visual panels --- */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="Where the values stand"
+          hint={`${fieldsTotal} values extracted from ${sum(o?.documents_by_status)} documents`}
+        >
+          {reviewSegments.length > 0 ? (
+            <Donut
+              segments={reviewSegments}
+              centerValue={`${fieldsTotal ? Math.round((trusted / fieldsTotal) * 100) : 0}%`}
+              centerLabel="cleared"
+            />
+          ) : (
+            <p className="text-xs text-muted">No values extracted yet.</p>
           )}
-        </div>
-        {version.data && (
-          <p className="mt-3 text-xs text-muted">
-            {version.data.allow_third_party_api
-              ? `Answers may use a hosted AI model (${version.data.llm_provider}). `
-              : "Runs fully on-premises — no document data leaves this deployment. "}
-            Version {version.data.version}.
-          </p>
-        )}
-      </section>
+        </Panel>
+
+        <Panel
+          title="Confidence by document type"
+          hint="average extractor confidence — lower types need more review"
+        >
+          {quality.data ? (
+            <BarList
+              max={1}
+              format={(v) => `${Math.round(v * 100)}%`}
+              data={Object.entries(quality.data.by_doc_type)
+                .sort((a, b) => b[1].mean_confidence - a[1].mean_confidence)
+                .map(([t, v]) => ({
+                  label: docTypeLabel(t),
+                  value: v.mean_confidence,
+                  color:
+                    v.mean_confidence >= 0.75
+                      ? "rgb(var(--c-ok))"
+                      : v.mean_confidence >= 0.6
+                        ? "rgb(var(--c-warn))"
+                        : "rgb(var(--c-danger))",
+                }))}
+            />
+          ) : (
+            <p className="text-xs text-muted">No extraction data yet.</p>
+          )}
+        </Panel>
+
+        <Panel title="What's in the collection" hint="documents by processing state">
+          <BarList
+            data={Object.entries(o?.documents_by_status ?? {})
+              .sort((a, b) => b[1] - a[1])
+              .map(([k, v]) => ({ label: statusLabel(k), value: v }))}
+          />
+        </Panel>
+
+        <Panel title="System status" className="text-sm">
+          <ul className="space-y-2">
+            {Object.entries(health.data?.checks ?? {}).map(([k, v]) => (
+              <li key={k} className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      v === "ok" ? "bg-ok" : v === "down" ? "bg-danger" : "bg-warn"
+                    }`}
+                  />
+                  {DEPENDENCY_LABELS[k] ?? k}
+                </span>
+                <span className="text-xs text-muted">{healthWord(v)}</span>
+              </li>
+            ))}
+            {health.isLoading && <li className="text-xs text-muted">Checking…</li>}
+            {health.isError && (
+              <li className="text-xs text-danger">
+                Can&rsquo;t reach the backend — run{" "}
+                <code className="font-mono">python scripts/dev.py api</code>.
+              </li>
+            )}
+          </ul>
+          {version.data && (
+            <p className="mt-3 border-t border-border pt-3 text-xs text-muted">
+              {version.data.allow_third_party_api
+                ? `Answers may use a hosted AI model (${version.data.llm_provider}).`
+                : "Runs fully on-premises — no document data leaves this deployment."}{" "}
+              Version {version.data.version}.
+            </p>
+          )}
+        </Panel>
+      </div>
     </div>
   );
 }

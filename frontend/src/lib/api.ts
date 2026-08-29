@@ -236,6 +236,7 @@ export const api = {
 
   // --- M2: knowledge ---
   graphStats: () => get<GraphStats>("/knowledge/stats"),
+  knowledgeGraph: () => get<SubgraphResponse>("/knowledge/graph"),
   listEntities: (params: { kind?: string; q?: string; limit?: number } = {}) => {
     const p = new URLSearchParams();
     if (params.kind) p.set("kind", params.kind);

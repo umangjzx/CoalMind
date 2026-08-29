@@ -75,6 +75,15 @@ def entity_detail(
     )
 
 
+@router.get("/graph", response_model=SubgraphResponse)
+def graph(limit: int = 400, db: Session = Depends(get_db)) -> SubgraphResponse:
+    g = kq.full_graph(db, limit=limit)
+    return SubgraphResponse(
+        entities=[EntityOut.model_validate(e) for e in g["entities"]],
+        relations=[RelationOut.model_validate(r) for r in g["relations"]],
+    )
+
+
 @router.get("/documents/{document_id}/subgraph", response_model=SubgraphResponse)
 def document_subgraph(document_id: uuid.UUID, db: Session = Depends(get_db)) -> SubgraphResponse:
     if db.get(Document, document_id) is None:

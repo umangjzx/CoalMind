@@ -10,31 +10,48 @@
  * design pass replaces them with the finalized palette in a later milestone.
  */
 :root {
-  --c-bg: 248 250 252; /* slate-50 */
+  --c-bg: 247 248 250;
   --c-surface: 255 255 255;
-  --c-surface-2: 241 245 249; /* slate-100 */
-  --c-border: 226 232 240; /* slate-200 */
-  --c-fg: 15 23 42; /* slate-900 */
-  --c-muted: 100 116 139; /* slate-500 */
+  --c-surface-2: 240 243 247;
+  --c-border: 224 228 235;
+  --c-fg: 20 27 42;
+  --c-muted: 100 112 133;
   --c-brand: 29 78 216; /* blue-700 */
   --c-brand-fg: 255 255 255;
   --c-ok: 21 128 61; /* green-700 */
   --c-warn: 180 83 9; /* amber-700 */
   --c-danger: 185 28 28; /* red-700 */
+
+  /* categorical palette for charts / entity kinds — colour-blind-considerate */
+  --k-1: 29 78 216; /* blue    */
+  --k-2: 13 148 136; /* teal    */
+  --k-3: 180 83 9; /* amber   */
+  --k-4: 124 58 237; /* violet  */
+  --k-5: 190 24 93; /* pink    */
+  --k-6: 21 128 61; /* green   */
+  --k-7: 71 85 105; /* slate   */
 }
 
 .dark {
-  --c-bg: 15 23 42; /* slate-900 */
-  --c-surface: 30 41 59; /* slate-800 */
-  --c-surface-2: 51 65 85; /* slate-700 */
-  --c-border: 51 65 85; /* slate-700 */
-  --c-fg: 241 245 249; /* slate-100 */
-  --c-muted: 148 163 184; /* slate-400 */
+  --c-bg: 13 17 27;
+  --c-surface: 24 30 43;
+  --c-surface-2: 33 41 57;
+  --c-border: 42 51 68;
+  --c-fg: 235 239 245;
+  --c-muted: 148 160 180;
   --c-brand: 96 165 250; /* blue-400 */
-  --c-brand-fg: 15 23 42;
+  --c-brand-fg: 12 17 27;
   --c-ok: 74 222 128;
   --c-warn: 251 191 36;
   --c-danger: 248 113 113;
+
+  --k-1: 96 165 250;
+  --k-2: 45 212 191;
+  --k-3: 251 191 36;
+  --k-4: 167 139 250;
+  --k-5: 244 114 182;
+  --k-6: 74 222 128;
+  --k-7: 148 163 184;
 }
 
 html,

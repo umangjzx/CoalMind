@@ -89,6 +89,18 @@ def _valid_at(rel: KGRelation, at: date) -> bool:
     return True
 
 
+def full_graph(db: Session, *, limit: int = 400) -> dict:
+    """The whole graph (entity + report nodes are small enough to send at once)."""
+    ents = list(db.execute(select(KGEntity).limit(limit)).scalars())
+    ent_ids = {e.id for e in ents}
+    rels = [
+        r
+        for r in db.execute(select(KGRelation)).scalars()
+        if r.src_id in ent_ids and r.dst_id in ent_ids
+    ]
+    return {"entities": ents, "relations": rels}
+
+
 def document_subgraph(db: Session, document_id: uuid.UUID) -> dict:
     rels = list(
         db.execute(

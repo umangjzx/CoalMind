@@ -26,6 +26,71 @@ const STATUS_TABS: { key: AnomalyStatusT | "all"; label: string }[] = [
   { key: "all", label: "All" },
 ];
 
+/** For a revision/contradiction, show old vs new per figure as a paired bar. */
+function CompareBars({ a }: { a: AnomalyOut }) {
+  const byField = new Map<string, { old?: number; neu?: number; oldOn?: string; newOn?: string }>();
+  for (const e of a.evidence) {
+    if (e.field_key == null || e.value == null) continue;
+    const g = byField.get(e.field_key) ?? {};
+    if (g.old == null) {
+      g.old = e.value;
+      g.oldOn = e.as_on ?? undefined;
+    } else if (e.value !== g.old) {
+      g.neu = e.value;
+      g.newOn = e.as_on ?? undefined;
+    }
+    byField.set(e.field_key, g);
+  }
+  const rows = [...byField.entries()].filter(([, g]) => g.old != null && g.neu != null);
+  if (rows.length === 0) return null;
+  const hi = Math.max(...rows.flatMap(([, g]) => [g.old ?? 0, g.neu ?? 0]), 1);
+
+  return (
+    <div className="mt-3 space-y-2">
+      {rows.map(([k, g]) => {
+        const delta = ((g.neu! - g.old!) / g.old!) * 100;
+        return (
+          <div key={k} className="text-xs">
+            <div className="flex items-baseline justify-between">
+              <span className="capitalize text-muted">{k.replace(/_/g, " ")}</span>
+              <span
+                className={`tabular-nums font-medium ${
+                  delta < 0 ? "text-danger" : "text-ok"
+                }`}
+              >
+                {delta > 0 ? "+" : ""}
+                {delta.toFixed(1)}%
+              </span>
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="w-24 shrink-0 text-right tabular-nums text-muted">
+                {g.old} <span className="text-[10px]">{g.oldOn}</span>
+              </span>
+              <span className="relative h-4 flex-1 rounded bg-surface-2">
+                <span
+                  className="absolute inset-y-0 left-0 rounded bg-muted/40"
+                  style={{ width: `${(g.old! / hi) * 100}%` }}
+                />
+                <span
+                  className="absolute inset-y-0 left-0 rounded"
+                  style={{
+                    width: `${(g.neu! / hi) * 100}%`,
+                    background: delta < 0 ? "rgb(var(--c-danger))" : "rgb(var(--c-ok))",
+                    opacity: 0.85,
+                  }}
+                />
+              </span>
+              <span className="w-24 shrink-0 tabular-nums font-medium">
+                {g.neu} <span className="text-[10px] text-muted">{g.newOn}</span>
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function EvidenceTable({ a }: { a: AnomalyOut }) {
   if (!a.evidence.length) return null;
   return (
@@ -79,7 +144,11 @@ function AnomalyCard({ a }: { a: AnomalyOut }) {
           </div>
           <h3 className="mt-1 text-sm font-medium">{a.title}</h3>
           <p className="mt-1 text-xs text-muted">{a.detail}</p>
-          <EvidenceTable a={a} />
+          <CompareBars a={a} />
+          <details className="mt-2 text-xs">
+            <summary className="cursor-pointer text-muted">All source rows</summary>
+            <EvidenceTable a={a} />
+          </details>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <input
