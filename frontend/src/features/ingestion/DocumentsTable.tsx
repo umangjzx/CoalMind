@@ -43,11 +43,11 @@ export function DocumentsTable({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted">
-                <th className="px-4 py-2 font-medium">File</th>
-                <th className="px-4 py-2 font-medium">Kind</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium">Values found</th>
-                <th className="px-4 py-2 font-medium">To review</th>
+                <th className="px-3 py-2 font-medium">File</th>
+                <th className="px-3 py-2 font-medium">Kind</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+                <th className="px-3 py-2 font-medium">Values found</th>
+                <th className="px-3 py-2 font-medium">To review</th>
               </tr>
             </thead>
             <tbody>
@@ -61,11 +61,11 @@ export function DocumentsTable({
                       selectedId === d.id ? "bg-surface-2" : ""
                     }`}
                   >
-                    <td className="max-w-[14rem] truncate px-4 py-2" title={d.original_filename}>
+                    <td className="max-w-[18rem] truncate px-3 py-2" title={d.original_filename}>
                       {d.original_filename}
                     </td>
-                    <td className="px-4 py-2 text-muted">{docTypeLabel(d.doc_type)}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-3 py-2 text-muted">{docTypeLabel(d.doc_type)}</td>
+                    <td className="px-3 py-2">
                       <StatusPill status={d.status} />
                       {p.ocr_pages ? (
                         <span
@@ -76,10 +76,10 @@ export function DocumentsTable({
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-4 py-2 tabular-nums text-muted">
+                    <td className="px-3 py-2 tabular-nums text-muted">
                       {p.fields_extracted ?? "—"}
                     </td>
-                    <td className="px-4 py-2 tabular-nums">
+                    <td className="px-3 py-2 tabular-nums">
                       {p.fields_needs_review ? (
                         <span className="text-warn">{p.fields_needs_review}</span>
                       ) : (

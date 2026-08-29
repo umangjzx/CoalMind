@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 
-/** Consistent page shell — wide-but-capped so data fills a monitor without the
- *  text measure running away. */
+/** Consistent page shell — capped so content stays dense rather than stretched
+ *  thin across a wide monitor. */
 export function Page({ children }: { children: ReactNode }) {
-  return <div className="mx-auto w-full max-w-[1560px] space-y-4">{children}</div>;
+  return <div className="mx-auto w-full max-w-[1320px] space-y-3">{children}</div>;
 }
 
 /** Standard title block. `actions` sits on the right on wide screens. */
@@ -31,7 +31,7 @@ export function PageHeader({
  *  under `sm`, 6-col under `lg`. */
 export function Grid({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`grid grid-cols-1 gap-4 lg:grid-cols-12 ${className}`}>{children}</div>
+    <div className={`grid grid-cols-1 gap-3 lg:grid-cols-12 ${className}`}>{children}</div>
   );
 }
 
@@ -80,24 +80,31 @@ export function Kpi({
     brand: "text-brand",
   }[tone];
   const base =
-    "rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors";
+    "rounded-lg border border-border bg-surface px-3 py-2 text-left transition-colors";
+  const inner = (
+    <>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="truncate text-[10px] uppercase tracking-wide text-muted">
+          {label}
+        </span>
+        <span className={`text-lg font-semibold leading-none tabular-nums ${color}`}>
+          {value}
+        </span>
+      </div>
+      {sub && <div className="mt-0.5 truncate text-[10px] text-muted">{sub}</div>}
+    </>
+  );
   return onClick ? (
     <button onClick={onClick} className={`${base} block w-full hover:border-brand`}>
-      <div className="text-[11px] uppercase tracking-wide text-muted">{label}</div>
-      <div className={`mt-0.5 text-xl font-semibold tabular-nums ${color}`}>{value}</div>
-      {sub && <div className="text-[11px] text-muted">{sub}</div>}
+      {inner}
     </button>
   ) : (
-    <div className={base}>
-      <div className="text-[11px] uppercase tracking-wide text-muted">{label}</div>
-      <div className={`mt-0.5 text-xl font-semibold tabular-nums ${color}`}>{value}</div>
-      {sub && <div className="text-[11px] text-muted">{sub}</div>}
-    </div>
+    <div className={base}>{inner}</div>
   );
 }
 
 export function KpiRow({ children }: { children: ReactNode }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{children}</div>
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">{children}</div>
   );
 }

@@ -223,15 +223,15 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`rounded-xl border border-border bg-surface p-4 ${className}`}>
+    <section className={`rounded-lg border border-border bg-surface p-3 ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold">{title}</h2>
-          {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
+          <h2 className="text-[13px] font-semibold">{title}</h2>
+          {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}
         </div>
         {right}
       </div>
-      <div className="mt-3">{children}</div>
+      <div className="mt-2.5">{children}</div>
     </section>
   );
 }

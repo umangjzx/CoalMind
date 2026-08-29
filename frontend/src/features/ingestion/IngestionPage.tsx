@@ -43,14 +43,13 @@ export function IngestionPage() {
         />
       </KpiRow>
 
+      <UploadPanel />
+
       <Grid>
-        <Col span={3}>
-          <UploadPanel />
-        </Col>
-        <Col span={5}>
+        <Col span={7}>
           <DocumentsTable onSelect={setSelected} selectedId={selected} />
         </Col>
-        <Col span={4}>
+        <Col span={5}>
           <ReviewQueue />
         </Col>
       </Grid>

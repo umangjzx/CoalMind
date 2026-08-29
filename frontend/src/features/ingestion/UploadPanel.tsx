@@ -33,12 +33,7 @@ export function UploadPanel() {
   }
 
   return (
-    <Card className="p-5">
-      <h2 className="text-sm font-semibold">Add documents</h2>
-      <p className="mt-1 text-xs text-muted">
-        PDFs, images, or scanned pages. Duplicate files are detected automatically, so
-        it&rsquo;s safe to re-upload.
-      </p>
+    <Card className="p-3">
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -51,7 +46,7 @@ export function UploadPanel() {
           pick(e.dataTransfer.files);
         }}
         onClick={() => inputRef.current?.click()}
-        className={`mt-3 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center text-sm transition-colors ${
+        className={`flex cursor-pointer items-center justify-center gap-3 rounded-lg border-2 border-dashed px-4 py-3 text-sm transition-colors ${
           dragOver ? "border-brand bg-brand/5" : "border-border hover:border-brand"
         }`}
       >
@@ -63,10 +58,19 @@ export function UploadPanel() {
           accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff"
           onChange={(e) => pick(e.target.files)}
         />
-        {upload.isPending ? "Uploading…" : "Drop files here, or click to choose"}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0 text-muted">
+          <path d="M12 16V4m0 0L7 9m5-5 5 5M4 20h16" stroke="currentColor" strokeWidth="1.75"
+            strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="font-medium">
+          {upload.isPending ? "Uploading…" : "Add documents"}
+        </span>
+        <span className="text-xs text-muted">
+          drop PDFs / scans here, or click — duplicates are skipped
+        </span>
       </div>
       {msg && (
-        <div className="mt-3 rounded bg-surface-2 px-3 py-2 text-xs text-muted">{msg}</div>
+        <div className="mt-2 rounded bg-surface-2 px-3 py-1.5 text-xs text-muted">{msg}</div>
       )}
     </Card>
   );

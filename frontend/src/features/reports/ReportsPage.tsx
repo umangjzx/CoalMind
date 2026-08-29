@@ -9,6 +9,13 @@ import { Col, Grid, Kpi, KpiRow, Page, PageHeader } from "@/components/layout";
 import { NewReportForm } from "./NewReportForm";
 import { ReportView } from "./ReportView";
 
+const HOW_IT_WORKS = [
+  ["1", "Pick a type and a subject", "e.g. Reserve Status for Jhanjra Block-II, as on a date."],
+  ["2", "Facts are pulled from the graph", "Every figure comes from a confirmed extraction, with a [n] footnote."],
+  ["3", "Low-confidence figures block finalising", "The draft stays editable until a person clears them in review."],
+  ["4", "Export", "PDF or DOCX, with the full source list attached."],
+];
+
 function Landing({ onPick }: { onPick: (id: string) => void }) {
   const templates = useQuery({ queryKey: ["report-templates"], queryFn: api.reportTemplates });
   const reports = useQuery({ queryKey: ["reports"], queryFn: () => api.listReports() });
@@ -19,35 +26,52 @@ function Landing({ onPick }: { onPick: (id: string) => void }) {
   }, {});
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <KpiRow>
         <Kpi label="Total reports" value={items.length} />
         <Kpi label="Draft" value={byStatus.draft ?? 0} tone="warn" />
         <Kpi label="In review" value={byStatus.in_review ?? 0} tone="warn" />
         <Kpi label="Finalised" value={byStatus.final ?? 0} tone="ok" />
         <Kpi label="Report types" value={templates.data?.length ?? 0} />
-        <Kpi
-          label="Cited figures"
-          value="every"
-          sub="footnoted to a source page"
-        />
+        <Kpi label="Cited figures" value="every" sub="footnoted to a source page" />
       </KpiRow>
 
-      <Panel title="Pick a report type" hint="each is filled from the confirmed facts in your documents">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {templates.data?.map((t) => (
-            <div key={t.key} className="rounded-lg border border-border bg-surface p-3">
-              <div className="text-sm font-medium">{t.title}</div>
-              <p className="mt-1 text-xs text-muted">{t.description}</p>
+      <Grid>
+        <Col span={7}>
+          <Panel title="Report types" hint="each is filled from the confirmed facts in your documents">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {templates.data?.map((t) => (
+                <div key={t.key} className="rounded-lg border border-border bg-surface p-3">
+                  <div className="text-[13px] font-medium">{t.title}</div>
+                  <p className="mt-1 text-[11px] leading-snug text-muted">{t.description}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Panel>
+          </Panel>
+        </Col>
+        <Col span={5}>
+          <Panel title="How a report is built" className="h-full">
+            <ol className="space-y-2.5">
+              {HOW_IT_WORKS.map(([n, head, body]) => (
+                <li key={n} className="flex gap-2.5 text-xs">
+                  <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand/15 text-[10px] font-semibold text-brand">
+                    {n}
+                  </span>
+                  <span>
+                    <span className="font-medium">{head}</span>
+                    <span className="text-muted"> — {body}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </Panel>
+        </Col>
+      </Grid>
 
       {items.length > 0 && (
         <Grid>
           <Col span={4}>
-            <Panel title="Reports by status">
+            <Panel title="Reports by status" className="h-full">
               <BarList
                 data={Object.entries(byStatus)
                   .sort((a, b) => b[1] - a[1])
@@ -58,11 +82,11 @@ function Landing({ onPick }: { onPick: (id: string) => void }) {
           <Col span={8}>
             <Panel title="Recent reports">
               <ul className="divide-y divide-border/60">
-                {items.slice(0, 8).map((r) => (
+                {items.slice(0, 10).map((r) => (
                   <li key={r.id}>
                     <button
                       onClick={() => onPick(r.id)}
-                      className="flex w-full items-center gap-3 px-1 py-2 text-left text-sm hover:bg-surface-2"
+                      className="flex w-full items-center gap-3 px-1 py-1.5 text-left text-sm hover:bg-surface-2"
                     >
                       <span className="min-w-0 flex-1 truncate">{r.title}</span>
                       <span className="shrink-0 text-xs text-muted">
@@ -98,29 +122,29 @@ export function ReportsPage() {
         unconfirmed, and each edit is kept as its own version.
       </PageHeader>
 
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[19rem,1fr]">
-        <div className="space-y-4">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-[15rem,1fr]">
+        <div className="space-y-3 lg:sticky lg:top-3 lg:self-start">
           <NewReportForm onCreated={(r) => setSelected(r.id)} />
           <Card>
-            <div className="border-b border-border px-4 py-2 text-sm font-semibold">
+            <div className="border-b border-border px-3 py-2 text-[13px] font-semibold">
               Reports {data ? `(${data.total})` : ""}
             </div>
             {data && data.items.length === 0 && (
               <EmptyState>No reports yet — create one above.</EmptyState>
             )}
-            <ul className="max-h-[60vh] overflow-auto">
+            <ul className="max-h-[55vh] overflow-auto">
               {data?.items.map((r: ReportT) => (
                 <li
                   key={r.id}
                   onClick={() => setSelected(r.id)}
-                  className={`cursor-pointer border-b border-border/60 px-4 py-2 text-sm last:border-0 hover:bg-surface-2 ${
+                  className={`cursor-pointer border-b border-border/60 px-3 py-2 text-xs last:border-0 hover:bg-surface-2 ${
                     selected === r.id ? "bg-surface-2" : ""
                   }`}
                 >
                   <div className="truncate font-medium">{r.title}</div>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
                     <StatusPill status={r.status} />
-                    <span>{reportTemplateLabel(r.template_key)}</span>
+                    <span className="truncate">{reportTemplateLabel(r.template_key)}</span>
                   </div>
                 </li>
               ))}

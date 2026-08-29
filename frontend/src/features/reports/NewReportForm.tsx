@@ -31,7 +31,7 @@ export function NewReportForm({ onCreated }: { onCreated: (r: ReportDetailT) => 
     tmpl?.param_schema.some((p) => p.required && !params[p.name]?.trim()) ?? true;
 
   return (
-    <Card className="p-4">
+    <Card className="p-3">
       <h2 className="text-sm font-semibold">New report</h2>
       <select
         value={key}
