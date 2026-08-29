@@ -249,19 +249,57 @@ and NMF is better on this corpus size; the BERTopic path activates if it's insta
 
 ---
 
-## ▶ M6 — Security, RBAC, Admin, Audit    (FR-9, 10, 12; NFRs)
+## ✅ M6 — Security, RBAC, Admin, Audit    (FR-9, 10, 12; NFRs)
 
-- JWT auth (access/refresh); password hashing; login/session.
-- RBAC per subsidiary + role; row-level scoping enforced on every query/document path.
-- Audit log hardening: hash-chain verification endpoint; no update/delete paths anywhere.
-- Admin console: ingestion monitoring, model-performance metrics, review-queue mgmt,
-  user/role mgmt.
-- `ALLOW_THIRD_PARTY_API=false` hard-enforced end to end; encryption at rest/in transit config.
-- Graceful-degradation + availability behaviors verified.
+- Migration `0007_m6_security`: `app_user.last_login_at` + `audit_event` target index.
+- `core/security.py` — **bcrypt** password hash/verify (72-byte safe; passlib dropped
+  for the passlib↔bcrypt-4.x break) + **JWT** access/refresh (HS256, typed, TTL).
+- `/auth`: `POST /login` (→ access + refresh + user; audits `auth.login` /
+  `auth.login_failed`), `POST /refresh`, `GET /me`.
+- **`Principal` dependency** (`api/deps.py`) replaces the `X-Actor-Email` placeholder:
+  a valid `Bearer` → real user; no token + `AUTH_REQUIRED=false` (dev default) → acts
+  as the seeded `data_admin` so M1-M5 keep working; `AUTH_REQUIRED=true` → 401.
+  `require_roles(...)` gate; `principal.scoped` for subsidiary-bound roles.
+- **RBAC row-scoping**: `GET /ingestion/documents`, `/review/queue`, `POST /query` now
+  filter to `subsidiary_id == principal.subsidiary_id OR IS NULL` for scoped principals;
+  a scoped query outside the officer's subsidiary → 403. Verified: a CCL geologist sees
+  CCL + national docs, not ECL's; a data_admin sees all.
+- **Audit hardening**: `audit/verify.py` re-walks the log by `seq`, recomputes each
+  `entry_hash` from the canonical body + `prev`, and reports `first_broken_seq` on
+  tamper. The writer is the only path — no update/delete routes exist.
+- **Admin API** (`/admin`, data_admin; overview/audit/security also ministry_official):
+  `GET /overview` (platform counts + security posture), `GET /security`,
+  `GET /audit` + `GET /audit/verify`, `GET /users` + `POST /users` +
+  `PATCH /users/{id}` + `POST /users/{id}/password`, `GET /extraction-quality`
+  (auto-accept rate, mean confidence, review outcomes, OCR ratio, per-doc-type),
+  `GET /ingestion` (recent docs + failures). All mutations audited.
+- **Sovereignty enforcement**: with `ALLOW_THIRD_PARTY_API=false` + a hosted
+  `LLM_PROVIDER`, `get_llm()` raises `LLMUnavailable` → reports fall to deterministic
+  prose, RAG to **search-only** (no data leaves the box); `/health` shows `llm: blocked`
+  and `/admin/security` shows `effective: blocked -> degraded`. Verified end to end.
+- Frontend: **Login** screen (demo-account shortcuts, "continue without signing in"),
+  `lib/auth.ts` token store + `api` bearer injection + 401 auto-clear, header user chip
+  + Logout, and the **Admin console** (overview + security posture with re-verify,
+  users table with inline role / active edits + add-user, audit log, extraction quality).
+- Tests: bcrypt + JWT (unit); login / me / refresh / bad-password; audit-chain verify +
+  **tamper detection**; admin role gates (403 for geologist); full user lifecycle
+  (create → patch role → set password → login); **document row-scoping** (geologist vs
+  admin). **69 backend tests green**; `tsc`/`eslint`/`vite build` green.
+
+**Acceptance:** login as `admin@coalindia.in` / `coalmind` → Admin console shows live
+counts, `audit hash-chain: intact (N events)`, editable users; `geologist@ccl.co.in` is
+`scoped`, gets 403 on `/admin/*`, and only sees CCL + national documents; flipping
+`ALLOW_THIRD_PARTY_API=false` degrades the LLM to on-prem-only without breaking answers.
+
+**Deps:** `bcrypt` (replaced `passlib[bcrypt]`).
+
+**Known limits (M7):** row-scoping applied to documents / review / query (reports,
+knowledge, topics still admin-wide); no refresh-token rotation / revocation list;
+encryption at rest/in transit is a deployment concern (TLS + DB/MinIO config), not code.
 
 ---
 
-## ⬚ M7 — Anomaly detection, Hindi, hardening, deploy    (FR-11, 14; PRD phases 4–7)
+## ▶ M7 — Anomaly detection, Hindi, hardening, deploy    (FR-11, 14; PRD phases 4–7)
 
 - FR-14: anomaly/inconsistency detection between historical and new data per entity.
 - FR-11: Hindi documents + queries end to end (OCR, NER, embeddings, answers).

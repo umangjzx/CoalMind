@@ -53,6 +53,10 @@ def main() -> int:
                 sub.name, sub.is_national = name, is_national
             by_code[code] = sub
 
+        from app.core.config import get_settings
+        from app.core.security import hash_password
+
+        pw = hash_password(get_settings().seed_user_password)
         for email, full_name, role, sub_code in DEMO_USERS:
             user = db.execute(
                 select(User).where(User.email == email)
@@ -62,6 +66,8 @@ def main() -> int:
                 db.add(user)
             user.full_name, user.role = full_name, role
             user.subsidiary_id = by_code[sub_code].id
+            if not user.hashed_password:
+                user.hashed_password = pw
 
         record_event(
             db,

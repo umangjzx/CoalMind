@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { NAV } from "@/app/nav";
 import { HealthBadge } from "@/components/HealthBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserMenu } from "@/components/UserMenu";
 
 export function AppShell() {
   return (
@@ -54,6 +55,7 @@ export function AppShell() {
           </div>
           <div className="flex items-center gap-3">
             <HealthBadge />
+            <UserMenu />
             <ThemeToggle />
           </div>
         </header>

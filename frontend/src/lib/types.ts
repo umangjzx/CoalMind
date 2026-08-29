@@ -382,3 +382,91 @@ export interface TrendsResponse {
   buckets: string[];
   series: { topic_index: number; label: string; counts: number[] }[];
 }
+
+// --- M6: security / admin ---
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  subsidiary_id: string | null;
+  last_login_at: string | null;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string | null;
+  token_type: string;
+  user: AuthUser;
+}
+
+export interface MeResponse extends AuthUser {
+  is_authenticated: boolean;
+  scoped: boolean;
+}
+
+export interface SecurityPosture {
+  auth_required: boolean;
+  llm_provider: string;
+  allow_third_party_api: boolean;
+  llm_is_hosted: boolean;
+  llm_effective: string;
+  embeddings_provider: string;
+  embeddings_on_prem: boolean;
+  audit_chain_ok: boolean;
+  audit_events: number;
+}
+
+export interface AdminOverview {
+  documents_by_status: Record<string, number>;
+  fields_by_status: Record<string, number>;
+  review_queue: number;
+  kg_entities: number;
+  kg_relations: number;
+  doc_chunks: number;
+  reports_by_status: Record<string, number>;
+  qa_by_status: Record<string, number>;
+  topics: number;
+  subsidiaries: number;
+  users: number;
+  security: SecurityPosture;
+}
+
+export interface AuditRow {
+  seq: number;
+  at: string;
+  actor: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  meta: Record<string, unknown>;
+  entry_hash: string | null;
+}
+
+export interface AuditListResponse {
+  items: AuditRow[];
+  total: number;
+}
+
+export interface ChainVerifyResponse {
+  ok: boolean;
+  checked: number;
+  first_broken_seq: number | null;
+  detail: string;
+}
+
+export interface AdminUserRow extends AuthUser {
+  created_at: string;
+  has_password: boolean;
+}
+
+export interface ExtractionQuality {
+  total_fields: number;
+  auto_accept_rate: number;
+  mean_confidence: number;
+  review_outcomes: Record<string, number>;
+  ocr_page_ratio: number;
+  by_doc_type: Record<string, { fields: number; mean_confidence: number }>;
+}

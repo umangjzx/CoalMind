@@ -14,7 +14,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_actor, get_db, resolve_actor_id
+from app.api.deps import Principal, get_actor, get_db, get_principal, resolve_actor_id
 from app.models import Document, DocumentStatus
 from app.schemas.ingestion import (
     DocumentDetail,
@@ -73,8 +73,14 @@ def list_documents(
     limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
 ) -> DocumentListResponse:
     q = select(Document)
+    if principal.scoped:  # RBAC: subsidiary officers see their subsidiary + national
+        q = q.where(
+            (Document.subsidiary_id == principal.subsidiary_id)
+            | (Document.subsidiary_id.is_(None))
+        )
     if status is not None:
         q = q.where(Document.status == status)
     if doc_type is not None:

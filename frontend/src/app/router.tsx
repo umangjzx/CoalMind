@@ -7,6 +7,8 @@ import { KnowledgePage } from "@/features/knowledge/KnowledgePage";
 import { ReportsPage } from "@/features/reports/ReportsPage";
 import { AskPage } from "@/features/query/AskPage";
 import { TopicsPage } from "@/features/topics/TopicsPage";
+import { AdminPage } from "@/features/admin/AdminPage";
+import { LoginPage } from "@/features/auth/LoginPage";
 import { PlaceholderPage } from "@/features/PlaceholderPage";
 import { NAV } from "@/app/nav";
 
@@ -16,6 +18,7 @@ const BUILT: Record<string, ReactElement> = {
   "/reports": <ReportsPage />,
   "/query": <AskPage />,
   "/topics": <TopicsPage />,
+  "/admin": <AdminPage />,
 };
 
 const featureRoutes = NAV.filter((n) => n.to !== "/").map((n) => ({
@@ -26,6 +29,7 @@ const featureRoutes = NAV.filter((n) => n.to !== "/").map((n) => ({
 }));
 
 export const router = createBrowserRouter([
+  { path: "/login", element: <LoginPage /> },
   {
     path: "/",
     element: <AppShell />,

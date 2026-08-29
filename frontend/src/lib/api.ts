@@ -1,6 +1,15 @@
+import { clearSession, getToken } from "./auth";
 import type {
+  AdminOverview,
+  AdminUserRow,
   AskResponse,
+  AuditListResponse,
+  ChainVerifyResponse,
   DiffResponse,
+  ExtractionQuality,
+  MeResponse,
+  SecurityPosture,
+  TokenResponse,
   DocumentDetail,
   DocumentListResponse,
   EntityDetail,
@@ -29,10 +38,18 @@ import type {
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...init,
-    headers: { Accept: "application/json", ...(init?.headers ?? {}) },
+    headers: {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers ?? {}),
+    },
   });
+  if (res.status === 401 && token && !path.startsWith("/auth/")) {
+    clearSession(); // stale/expired token — drop it, fall back to dev session
+  }
   if (!res.ok) {
     let detail = "";
     try {
@@ -50,6 +67,53 @@ const get = <T>(path: string) => req<T>(path);
 export const api = {
   health: () => get<HealthResponse>("/health"),
   version: () => get<VersionResponse>("/version"),
+
+  // --- M6: auth + admin ---
+  login: (email: string, password: string) =>
+    req<TokenResponse>("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    }),
+  me: () => get<MeResponse>("/auth/me"),
+  adminOverview: () => get<AdminOverview>("/admin/overview"),
+  adminSecurity: () => get<SecurityPosture>("/admin/security"),
+  adminAudit: (params: { action?: string; actor?: string; limit?: number } = {}) => {
+    const q = new URLSearchParams({ limit: String(params.limit ?? 60) });
+    if (params.action) q.set("action", params.action);
+    if (params.actor) q.set("actor", params.actor);
+    return get<AuditListResponse>(`/admin/audit?${q}`);
+  },
+  adminVerifyChain: () => get<ChainVerifyResponse>("/admin/audit/verify"),
+  adminUsers: () => get<AdminUserRow[]>("/admin/users"),
+  adminCreateUser: (body: {
+    email: string;
+    full_name: string;
+    role: string;
+    subsidiary_id?: string | null;
+    password: string;
+  }) =>
+    req<AdminUserRow>("/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  adminUpdateUser: (
+    id: string,
+    body: Partial<{ role: string; subsidiary_id: string | null; is_active: boolean; full_name: string }>,
+  ) =>
+    req<AdminUserRow>(`/admin/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  adminSetPassword: (id: string, password: string) =>
+    req<AdminUserRow>(`/admin/users/${id}/password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    }),
+  adminExtractionQuality: () => get<ExtractionQuality>("/admin/extraction-quality"),
 
   // --- M1 ---
   listDocuments: (params: { status?: string; doc_type?: string; limit?: number } = {}) => {

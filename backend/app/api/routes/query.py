@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_actor, get_db, resolve_actor_id
+from app.api.deps import Principal, get_actor, get_db, get_principal, resolve_actor_id
 from app.core.config import get_settings
 from app.models import QAPair, QAStatus
 from app.schemas.query import AskRequest, AskResponse, QAListResponse, QAOut
@@ -21,11 +21,16 @@ router = APIRouter(tags=["query"])
 def ask_question(
     body: AskRequest,
     db: Session = Depends(get_db),
-    actor: str = Depends(get_actor),
+    principal: Principal = Depends(get_principal),
 ) -> AskResponse:
+    scope = body.subsidiary_id
+    if principal.scoped:
+        if scope is not None and scope != principal.subsidiary_id:
+            raise HTTPException(403, "query scope outside your subsidiary")
+        scope = principal.subsidiary_id  # RBAC: restrict retrieval to own + national
     qa = ask(
-        db, body.question, subsidiary_id=body.subsidiary_id,
-        actor=actor, actor_id=resolve_actor_id(db, actor), use_cache=body.use_cache,
+        db, body.question, subsidiary_id=scope,
+        actor=principal.email, actor_id=principal.user_id, use_cache=body.use_cache,
     )
     out = AskResponse.model_validate(qa, from_attributes=True)
     out.confidence_threshold = get_settings().confidence_threshold

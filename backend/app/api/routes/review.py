@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_actor, get_db, resolve_actor_id
+from app.api.deps import Principal, get_actor, get_db, get_principal, resolve_actor_id
 from app.audit import record_event
 from app.models import Document, DocumentStatus, ExtractionField, FieldStatus
 from app.schemas.review import (
@@ -34,12 +34,18 @@ def review_queue(
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
 ) -> ReviewQueueResponse:
     q = (
         select(ExtractionField, Document)
         .join(Document, ExtractionField.document_id == Document.id)
         .where(ExtractionField.status == FieldStatus.needs_review)
     )
+    if principal.scoped:
+        q = q.where(
+            (Document.subsidiary_id == principal.subsidiary_id)
+            | (Document.subsidiary_id.is_(None))
+        )
     if subsidiary_id is not None:
         q = q.where(Document.subsidiary_id == subsidiary_id)
     if doc_type is not None:

@@ -33,7 +33,7 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | Faster LLM | point `OLLAMA_BASE_URL` at a GPU-hosted Ollama (e.g. Colab T4 + ngrok/cloudflared tunnel) — config only, no code change |
 | Frontend | React 18 + Vite 6 + TS + Tailwind 3, TanStack Query, React Router |
 | Design | tokens are a neutral baseline now; full **ui-ux-pro-max** design pass in M7 (and per-screen as milestones build UI) |
-| Auth/RBAC | JWT + per-subsidiary row scoping (M6); models stubbed in M0 |
+| Auth/RBAC (M6) | bcrypt + HS256 JWT (access/refresh); `Principal` dependency, `AUTH_REQUIRED` flag (dev=false → acts as seeded `data_admin`); `require_roles()`; per-subsidiary row-scoping on documents/review/query; audit hash-chain `verify_chain()`; `/admin/*` console API |
 | Deploy | docker-compose (dev); k8s/Helm for on-prem / MeghRaj (M7) |
 
 ## Heavy-dependency policy

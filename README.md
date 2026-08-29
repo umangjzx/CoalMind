@@ -17,7 +17,7 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
 - Architecture: [`docs/architecture.md`](docs/architecture.md) · Domain model: [`docs/entity-schema.md`](docs/entity-schema.md)
 - Roadmap & status: [`.planning/ROADMAP.md`](.planning/ROADMAP.md) · Decisions: [`.planning/CONTEXT.md`](.planning/CONTEXT.md)
 
-## Status — M0 + M1 + M2 + M3 + M4 + M5 complete
+## Status — M0 + M1 + M2 + M3 + M4 + M5 + M6 complete
 
 - **M0 (scaffold):** monorepo, infra, FastAPI skeleton (`/health`, `/version`), LLM &
   embeddings provider abstractions (Ollama default · Anthropic gated by a sovereignty
@@ -50,8 +50,15 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   domain stoplist, a **word cloud** filterable by subsidiary / type / date, **trend-
   over-time** buckets, and an LLM one-paragraph "what's driving this" per topic.
   `/topics/*` API + the **Topics & Trends** screen. `python scripts/dev.py topics`.
+- **M6 (security, RBAC, admin, audit):** bcrypt + **JWT auth** (`/auth/login|refresh|me`,
+  demo accounts, password `coalmind`); a `Principal` with an `AUTH_REQUIRED` flag (dev
+  stays open as `data_admin`); **per-subsidiary row-scoping** on documents / review /
+  query; **audit hash-chain verification** with tamper detection; an **Admin console**
+  (platform counts, security posture, user CRUD, audit log, extraction-quality metrics);
+  hard `ALLOW_THIRD_PARTY_API=false` enforcement (LLM → on-prem-only, degrades
+  gracefully). Login screen + token store in the frontend.
 
-**Next: M6 — Security, RBAC, Admin & Audit.**
+**Next: M7 — Anomaly detection, Hindi end-to-end, benchmarking & deploy.**
 
 ## Repository layout
 
@@ -93,7 +100,14 @@ python scripts/dev.py web               # Vite on   http://localhost:5173   (ano
 Walk the pipeline in the app: **Ingestion & Review** (classify → extract → verify
 low-confidence fields) → **Knowledge Graph** (browse the mines/blocks/reserves the
 verified facts produced, semantic search) → **Report Builder** (generate a cited,
-confidence-gated Reserve Status / Parliamentary Q&A draft and export it to PDF/DOCX).
+confidence-gated Reserve Status / Parliamentary Q&A draft and export it to PDF/DOCX)
+→ **Ask CoalMind** (cited answers, declines on low confidence) → **Topics & Trends**
+→ **Admin**.
+
+Sign in (top-right) with a demo account — password `coalmind`:
+`admin@coalindia.in` (IT admin), `ministry@coal.gov.in`, `officer@cmpdi.co.in`,
+`geologist@ccl.co.in` (subsidiary-scoped). Dev mode also works signed-out (acts as
+admin); set `AUTH_REQUIRED=true` to lock it down.
 
 Then open <http://localhost:5173> — the header health badge should read **backend ok**
 with db / storage / llm / embeddings all green.

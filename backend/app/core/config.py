@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-only-change-me"
     jwt_access_ttl_min: int = 30
     jwt_refresh_ttl_days: int = 7
+    # when false, requests without a valid bearer token act as the seeded data_admin
+    # (keeps dev/demo frictionless); set true for a locked-down deployment.
+    auth_required: bool = False
+    seed_user_password: str = "coalmind"  # dev password for the seeded demo users
 
     # --- API ---
     api_host: str = "0.0.0.0"
