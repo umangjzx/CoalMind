@@ -247,7 +247,10 @@ def score_document(path: Path, gt: dict, *, threshold: float) -> DocResult:
     # extraction is run with the ground-truth type so a classification miss does
     # not also zero the field score (the two are reported separately).
     cands, _notes = extract_fields(gt_type, pages)
-    by_key = {c.field_key: c for c in cands}
+    # first candidate per key wins, matching the KG resolver's setdefault()
+    by_key: dict = {}
+    for c in cands:
+        by_key.setdefault(c.field_key, c)
 
     aliases = GT_ALIASES.get(gt_type, {})
     res = DocResult(

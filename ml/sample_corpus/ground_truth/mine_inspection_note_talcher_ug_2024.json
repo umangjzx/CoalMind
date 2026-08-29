@@ -1,0 +1,11 @@
+{
+  "doc_type": "inspection_report",
+  "subsidiary": "MCL",
+  "mine": "Talcher Underground",
+  "date": "2024-01-18",
+  "fields": {
+    "finding": "Air quantity at the last cut-through measured 18 percent below the plan.",
+    "risk_rating": "high",
+    "action_due": "2024-02-02"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "doc_type": "borehole_log_summary",
+  "subsidiary": "SECL",
+  "mine": "Gevra",
+  "block": "Gevra Block-I",
+  "fields": {
+    "borehole_id": "BH-GVR-I-112",
+    "total_depth_m": {
+      "value": 505.2,
+      "unit": "metre"
+    },
+    "seams_intersected": 3,
+    "principal_seam": "Seam-III"
+  }
+}

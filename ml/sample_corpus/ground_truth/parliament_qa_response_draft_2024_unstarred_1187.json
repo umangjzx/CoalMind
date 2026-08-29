@@ -1,0 +1,17 @@
+{
+  "doc_type": "parliamentary_qa_response",
+  "subsidiary": "CIL",
+  "reference": "Unstarred Question No. 1187",
+  "date": "2024-03-12",
+  "fields": {
+    "question_topic": "overburden removal and stripping ratio trend in SECL",
+    "cil_production_mt_fy24": {
+      "value": 773.6,
+      "unit": "million_tonnes"
+    },
+    "cil_target_mt_fy24": {
+      "value": 780.0,
+      "unit": "million_tonnes"
+    }
+  }
+}

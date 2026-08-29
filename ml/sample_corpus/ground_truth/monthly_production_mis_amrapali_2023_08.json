@@ -1,0 +1,24 @@
+{
+  "doc_type": "monthly_production_mis",
+  "subsidiary": "CCL",
+  "mine": "Amrapali Opencast",
+  "month": "2023-08",
+  "fields": {
+    "coal_production_lakh_te": {
+      "value": 8.2,
+      "unit": "lakh_tonnes"
+    },
+    "target_lakh_te": {
+      "value": 9.0,
+      "unit": "lakh_tonnes"
+    },
+    "achievement_pct": {
+      "value": 91.1,
+      "unit": "percent"
+    },
+    "overburden_removal_lakh_cum": {
+      "value": 17.8,
+      "unit": "lakh_cubic_metre"
+    }
+  }
+}

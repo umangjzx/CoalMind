@@ -1,0 +1,24 @@
+{
+  "doc_type": "monthly_production_mis",
+  "subsidiary": "SECL",
+  "mine": "Gevra Opencast",
+  "month": "2023-06",
+  "fields": {
+    "coal_production_lakh_te": {
+      "value": 40.2,
+      "unit": "lakh_tonnes"
+    },
+    "target_lakh_te": {
+      "value": 41.0,
+      "unit": "lakh_tonnes"
+    },
+    "achievement_pct": {
+      "value": 98.0,
+      "unit": "percent"
+    },
+    "overburden_removal_lakh_cum": {
+      "value": 90.1,
+      "unit": "lakh_cubic_metre"
+    }
+  }
+}

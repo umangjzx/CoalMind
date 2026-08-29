@@ -1,0 +1,23 @@
+{
+  "doc_type": "geological_reserve_status",
+  "subsidiary": "CCL",
+  "mine": "Rajmahal",
+  "block": "Rajmahal Block-B",
+  "as_on": "2023-04-01",
+  "fields": {
+    "proved_reserve_mt": {
+      "value": 158.9,
+      "unit": "million_tonnes"
+    },
+    "indicated_reserve_mt": {
+      "value": 44.2,
+      "unit": "million_tonnes"
+    },
+    "inferred_reserve_mt": {
+      "value": 18.0,
+      "unit": "million_tonnes"
+    },
+    "seam": "Seam-I",
+    "avg_grade": "G11"
+  }
+}

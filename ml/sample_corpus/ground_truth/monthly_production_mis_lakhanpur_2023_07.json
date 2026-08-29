@@ -1,0 +1,24 @@
+{
+  "doc_type": "monthly_production_mis",
+  "subsidiary": "MCL",
+  "mine": "Lakhanpur OCP",
+  "month": "2023-07",
+  "fields": {
+    "coal_production_lakh_te": {
+      "value": 11.3,
+      "unit": "lakh_tonnes"
+    },
+    "target_lakh_te": {
+      "value": 12.0,
+      "unit": "lakh_tonnes"
+    },
+    "achievement_pct": {
+      "value": 94.2,
+      "unit": "percent"
+    },
+    "overburden_removal_lakh_cum": {
+      "value": 24.4,
+      "unit": "lakh_cubic_metre"
+    }
+  }
+}

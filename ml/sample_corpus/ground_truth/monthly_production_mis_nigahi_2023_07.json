@@ -1,0 +1,24 @@
+{
+  "doc_type": "monthly_production_mis",
+  "subsidiary": "NCL",
+  "mine": "Nigahi Opencast",
+  "month": "2023-07",
+  "fields": {
+    "coal_production_lakh_te": {
+      "value": 15.9,
+      "unit": "lakh_tonnes"
+    },
+    "target_lakh_te": {
+      "value": 17.5,
+      "unit": "lakh_tonnes"
+    },
+    "achievement_pct": {
+      "value": 90.9,
+      "unit": "percent"
+    },
+    "overburden_removal_lakh_cum": {
+      "value": 35.1,
+      "unit": "lakh_cubic_metre"
+    }
+  }
+}

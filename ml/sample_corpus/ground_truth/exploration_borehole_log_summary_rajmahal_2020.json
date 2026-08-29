@@ -1,0 +1,15 @@
+{
+  "doc_type": "borehole_log_summary",
+  "subsidiary": "CCL",
+  "mine": "Rajmahal",
+  "block": "Rajmahal Block-B",
+  "fields": {
+    "borehole_id": "BH-RJM-B-058",
+    "total_depth_m": {
+      "value": 288.6,
+      "unit": "metre"
+    },
+    "seams_intersected": 2,
+    "principal_seam": "Seam-I"
+  }
+}

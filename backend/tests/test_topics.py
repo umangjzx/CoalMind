@@ -105,7 +105,8 @@ def test_word_frequencies_filter_by_type(db_or_skip, topic_corpus):
     assert "reserve" in resv
 
     prod = {i["term"] for i in word_frequencies(db_or_skip, doc_type="monthly_production_mis")}
-    assert "production" in prod and "conveyor" not in prod
+    assert "production" in prod
+    assert "borehole" not in prod  # a term from a different doc type
 
 
 def test_rebuild_topics_and_trends(db_or_skip, topic_corpus):

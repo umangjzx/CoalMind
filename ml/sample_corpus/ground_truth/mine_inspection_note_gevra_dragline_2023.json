@@ -1,0 +1,11 @@
+{
+  "doc_type": "inspection_report",
+  "subsidiary": "SECL",
+  "mine": "Gevra Opencast",
+  "date": "2023-09-05",
+  "fields": {
+    "finding": "Tail-swing warning barrier missing on the north side of DL-2.",
+    "risk_rating": "high",
+    "action_due": "2023-09-20"
+  }
+}

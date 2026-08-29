@@ -1,0 +1,23 @@
+{
+  "doc_type": "geological_reserve_status",
+  "subsidiary": "SECL",
+  "mine": "Dipka",
+  "block": "Dipka West",
+  "as_on": "2021-04-01",
+  "fields": {
+    "proved_reserve_mt": {
+      "value": 312.6,
+      "unit": "million_tonnes"
+    },
+    "indicated_reserve_mt": {
+      "value": 88.4,
+      "unit": "million_tonnes"
+    },
+    "inferred_reserve_mt": {
+      "value": 30.2,
+      "unit": "million_tonnes"
+    },
+    "seam": "Seam-II",
+    "avg_grade": "G9"
+  }
+}

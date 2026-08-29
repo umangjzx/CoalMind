@@ -1,0 +1,23 @@
+{
+  "doc_type": "geological_reserve_status",
+  "subsidiary": "MCL",
+  "mine": "Lakhanpur",
+  "block": "Lakhanpur OCP",
+  "as_on": "2022-04-01",
+  "fields": {
+    "proved_reserve_mt": {
+      "value": 205.0,
+      "unit": "million_tonnes"
+    },
+    "indicated_reserve_mt": {
+      "value": 60.0,
+      "unit": "million_tonnes"
+    },
+    "inferred_reserve_mt": {
+      "value": 25.0,
+      "unit": "million_tonnes"
+    },
+    "seam": "Seam-V",
+    "avg_grade": "G7"
+  }
+}

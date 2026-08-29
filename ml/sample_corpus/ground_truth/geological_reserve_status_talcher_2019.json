@@ -1,0 +1,23 @@
+{
+  "doc_type": "geological_reserve_status",
+  "subsidiary": "MCL",
+  "mine": "Talcher",
+  "block": "Talcher Expansion Block-A",
+  "as_on": "2019-04-01",
+  "fields": {
+    "proved_reserve_mt": {
+      "value": 690.5,
+      "unit": "million_tonnes"
+    },
+    "indicated_reserve_mt": {
+      "value": 210.3,
+      "unit": "million_tonnes"
+    },
+    "inferred_reserve_mt": {
+      "value": 95.8,
+      "unit": "million_tonnes"
+    },
+    "seam": "Seam-IV Bottom",
+    "avg_grade": "G6"
+  }
+}
