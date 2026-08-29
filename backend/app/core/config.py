@@ -19,7 +19,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(REPO_ROOT / ".env", REPO_ROOT / ".env.example"),
+        # pydantic-settings: later files win — .env must override .env.example
+        env_file=(REPO_ROOT / ".env.example", REPO_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
@@ -41,11 +42,16 @@ class Settings(BaseSettings):
     minio_secure: bool = False
 
     # --- LLM ---
-    llm_provider: Literal["ollama", "anthropic"] = "ollama"
+    llm_provider: Literal["ollama", "anthropic", "openrouter"] = "ollama"
     llm_model: str = "mistral"
     ollama_base_url: str = "http://localhost:11434"
+    ollama_keep_alive: str = "30m"  # keep the model resident between generations
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-5"
+    # hosted fallback via OpenRouter (gated by allow_third_party_api)
+    openrouter_api_key: str = ""
+    openrouter_model: str = "openai/gpt-4o-mini"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # --- Embeddings ---
     # (Anthropic has no first-party embeddings endpoint; use fastembed on-prem.)

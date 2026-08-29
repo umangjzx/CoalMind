@@ -19,7 +19,7 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | Backend | FastAPI + SQLAlchemy 2 + Alembic, `uv`-managed, Python 3.12 |
 | DB | Postgres 16 + `pgvector` + `pg_trgm` (structured data, audit, embeddings, KG) |
 | Object store | MinIO (S3-compatible), content-addressed by SHA-256 |
-| LLM | `LLMProvider` protocol → `OllamaProvider` (`mistral`, default) / `AnthropicProvider` (gated) |
+| LLM | `LLMProvider` protocol → `OllamaProvider` (`mistral`, default; `keep_alive`, ngrok-safe headers) / `AnthropicProvider` / `OpenRouterProvider` (`openai/gpt-4o-mini`) — hosted ones gated by `ALLOW_THIRD_PARTY_API`. `.env` overrides `.env.example` (env_file order fixed). |
 | Embeddings | `Embedder` protocol → `FastEmbedEmbedder` (`BAAI/bge-small-en-v1.5`, 384-d, default) / `OllamaEmbedder` |
 | Knowledge graph | `kg_entity` + `kg_relation` in Postgres (M2); vector store = `doc_chunk` `vector(384)` + HNSW cosine index; built only from `auto_accepted`+`verified` fields |
 | Background jobs | FastAPI `BackgroundTasks` running `run_pipeline()` → also builds the KG (M1/M2); arq + Redis is the scale swap-in, not yet added |

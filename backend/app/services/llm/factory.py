@@ -15,16 +15,27 @@ def get_llm() -> LLMProvider:
     if s.llm_provider == "ollama":
         from app.services.llm.ollama import OllamaProvider
 
-        return OllamaProvider(base_url=s.ollama_base_url, model=s.llm_model)
+        return OllamaProvider(
+            base_url=s.ollama_base_url, model=s.llm_model, keep_alive=s.ollama_keep_alive
+        )
 
-    if s.llm_provider == "anthropic":
+    if s.llm_provider in ("anthropic", "openrouter"):
         if not s.allow_third_party_api:
             raise LLMUnavailable(
-                "LLM_PROVIDER=anthropic but ALLOW_THIRD_PARTY_API is false — "
+                f"LLM_PROVIDER={s.llm_provider} but ALLOW_THIRD_PARTY_API is false — "
                 "refusing to send data to a hosted API."
             )
-        from app.services.llm.anthropic_provider import AnthropicProvider
+        if s.llm_provider == "anthropic":
+            from app.services.llm.anthropic_provider import AnthropicProvider
 
-        return AnthropicProvider(api_key=s.anthropic_api_key, model=s.anthropic_model)
+            return AnthropicProvider(api_key=s.anthropic_api_key, model=s.anthropic_model)
+
+        from app.services.llm.openrouter import OpenRouterProvider
+
+        return OpenRouterProvider(
+            api_key=s.openrouter_api_key,
+            model=s.openrouter_model,
+            base_url=s.openrouter_base_url,
+        )
 
     raise LLMUnavailable(f"unknown LLM_PROVIDER: {s.llm_provider!r}")

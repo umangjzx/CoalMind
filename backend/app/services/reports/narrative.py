@@ -40,7 +40,7 @@ def synthesize(instruction: str, facts_lines: list[str], *, max_sentences: int =
         text = llm.chat(
             [ChatMessage(role="system", content=_SYSTEM), ChatMessage(role="user", content=prompt)],
             temperature=0.1,
-            max_tokens=400,
+            max_tokens=220,  # 4-6 sentences; keeps generation short on modest hardware
         ).strip()
         if text and "[[c:" in text:
             return text
