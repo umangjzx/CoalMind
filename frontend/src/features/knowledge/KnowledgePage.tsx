@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { KGEntity } from "@/lib/types";
 import { entityKindLabel, unitLabel } from "@/lib/labels";
-import { KIND_COLOR } from "@/components/charts";
-import { Page, PageHeader } from "@/components/layout";
+import { BarList, KIND_COLOR, Panel } from "@/components/charts";
+import { Kpi, KpiRow, Page, PageHeader } from "@/components/layout";
 import { Card, EmptyState } from "@/components/primitives";
 import { GraphView } from "./GraphView";
 import { SemanticSearch } from "./SemanticSearch";
@@ -16,22 +16,36 @@ const KIND_ORDER = [
 ];
 const kindColor = (k: string) => KIND_COLOR[Math.max(0, KIND_ORDER.indexOf(k)) % KIND_COLOR.length];
 
-function StatsBar() {
+function GraphShape() {
   const { data } = useQuery({ queryKey: ["kg-stats"], queryFn: api.graphStats });
   if (!data) return null;
+  const total = data.entities || 1;
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      {[
-        ["Facts & entities", data.entities],
-        ["Links between them", data.relations],
-        ["Searchable passages", data.chunks],
-      ].map(([label, n]) => (
-        <div key={label as string} className="rounded-lg border border-border bg-surface px-4 py-3">
-          <div className="text-xl font-semibold tabular-nums">{n as number}</div>
-          <div className="text-xs text-muted">{label as string}</div>
-        </div>
-      ))}
-    </div>
+    <>
+      <KpiRow>
+        <Kpi label="Facts & entities" value={data.entities} />
+        <Kpi label="Links between them" value={data.relations} />
+        <Kpi label="Searchable passages" value={data.chunks} />
+        <Kpi
+          label="Links per entity"
+          value={(data.relations / total).toFixed(1)}
+          sub="how connected the graph is"
+        />
+        <Kpi label="Kinds of thing" value={Object.keys(data.entities_by_kind).length} />
+        <Kpi label="Every item" value="traced" sub="to a source document" tone="ok" />
+      </KpiRow>
+      <Panel title="What the graph is made of" hint="entities by kind">
+        <BarList
+          data={Object.entries(data.entities_by_kind)
+            .sort((a, b) => b[1] - a[1])
+            .map(([k, n], i) => ({
+              label: entityKindLabel(k),
+              value: n,
+              color: KIND_COLOR[i % KIND_COLOR.length],
+            }))}
+        />
+      </Panel>
+    </>
   );
 }
 
@@ -85,7 +99,7 @@ export function KnowledgePage() {
         together. Every item traces back to the document it came from.
       </PageHeader>
 
-      <StatsBar />
+      <GraphShape />
       <GraphView onSelect={setSelected} />
       <SemanticSearch />
 

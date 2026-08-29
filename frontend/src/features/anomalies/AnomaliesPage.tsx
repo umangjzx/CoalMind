@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AnomalyOut, AnomalySeverityT, AnomalyStatusT } from "@/lib/types";
+import { BarList, Panel } from "@/components/charts";
 import { Card, EmptyState } from "@/components/primitives";
-import { Page, PageHeader } from "@/components/layout";
+import { Col, Grid, Kpi, KpiRow, Page, PageHeader } from "@/components/layout";
 
 const SEV_DOT: Record<AnomalySeverityT, string> = {
   high: "bg-danger",
@@ -198,19 +199,29 @@ function AnomalyCard({ a }: { a: AnomalyOut }) {
   );
 }
 
+const SEV_COLOR: Record<string, string> = {
+  high: "rgb(var(--c-danger))",
+  medium: "rgb(var(--c-warn))",
+  low: "rgb(var(--c-muted))",
+};
+
 export function AnomaliesPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<AnomalyStatusT | "all">("open");
 
-  const list = useQuery({
-    queryKey: ["anomalies", tab],
-    queryFn: () => api.anomalies(tab === "all" ? {} : { status: tab }),
-  });
-
+  const all = useQuery({ queryKey: ["anomalies", "all"], queryFn: () => api.anomalies({}) });
   const scan = useMutation({
     mutationFn: () => api.scanAnomalies(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["anomalies"] }),
   });
+
+  const items = all.data?.items ?? [];
+  const shown = useMemo(
+    () => (tab === "all" ? items : items.filter((a) => a.status === tab)),
+    [items, tab],
+  );
+  const count = (s: string) => items.filter((a) => a.status === s).length;
+  const highOpen = items.filter((a) => a.status === "open" && a.severity === "high").length;
 
   return (
     <Page>
@@ -228,9 +239,22 @@ export function AnomaliesPage() {
       >
         Where a figure in a newer document disagrees with what earlier documents said
         about the same mine or block &mdash; a reserve revised between reports, parts that
-        don&rsquo;t add up to their stated total, an impossible value, or a number far
-        outside the usual range. Every row links to the documents it came from.
+        don&rsquo;t add up to a stated total, an impossible value, or a number far outside
+        the usual range. Every row links to the documents it came from.
       </PageHeader>
+
+      <KpiRow>
+        <Kpi label="Open" value={count("open")} tone={count("open") ? "warn" : "ok"}
+          onClick={() => setTab("open")} />
+        <Kpi label="High severity" value={highOpen} tone={highOpen ? "danger" : "fg"} />
+        <Kpi label="Acknowledged" value={count("acknowledged")}
+          onClick={() => setTab("acknowledged")} />
+        <Kpi label="Resolved" value={count("resolved")} tone="ok"
+          onClick={() => setTab("resolved")} />
+        <Kpi label="Dismissed" value={count("dismissed")}
+          onClick={() => setTab("dismissed")} />
+        <Kpi label="Total ever" value={items.length} onClick={() => setTab("all")} />
+      </KpiRow>
 
       {scan.data && (
         <div className="rounded border border-border bg-surface-2 px-3 py-2 text-xs text-muted">
@@ -239,52 +263,80 @@ export function AnomaliesPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {STATUS_TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`rounded-full px-3 py-1 text-xs ${
-              tab === t.key
-                ? "bg-brand text-brand-fg"
-                : "border border-border text-muted hover:bg-surface-2"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-        {list.data && (
-          <span className="ml-auto text-xs text-muted">
-            {list.data.open_count} open · {list.data.total} total
-          </span>
-        )}
-      </div>
+      <Grid>
+        <Col span={8} className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {STATUS_TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`rounded-full px-3 py-1 text-xs ${
+                  tab === t.key
+                    ? "bg-brand text-brand-fg"
+                    : "border border-border text-muted hover:bg-surface-2"
+                }`}
+              >
+                {t.label}
+                {t.key !== "all" && (
+                  <span className="ml-1.5 opacity-70">{count(t.key as string)}</span>
+                )}
+              </button>
+            ))}
+          </div>
 
-      {list.isLoading && <div className="text-sm text-muted">Loading…</div>}
-      {list.isError && (
-        <div className="text-sm text-danger">Couldn&rsquo;t load anomalies.</div>
-      )}
-      {list.data && list.data.items.length === 0 && (
-        <EmptyState>
-          {tab === "open" && list.data.total > 0 ? (
-            <>
-              No open anomalies — {list.data.total} {list.data.total === 1 ? "has" : "have"}{" "}
-              been reviewed. See the <b>All</b> tab.
-            </>
-          ) : (
-            <>
-              Nothing here. Once two or more documents cover the same mine or block, click{" "}
-              <b>Check again</b> to compare their figures.
-            </>
+          {all.isLoading && <Card className="p-6"><EmptyState>Loading…</EmptyState></Card>}
+          {all.isError && (
+            <Card className="p-6"><EmptyState>Couldn&rsquo;t load anomalies.</EmptyState></Card>
           )}
-        </EmptyState>
-      )}
+          {all.data && shown.length === 0 && (
+            <Card className="p-6">
+              <EmptyState>
+                {tab === "open" && items.length > 0 ? (
+                  <>Everything is reviewed. See the other tabs.</>
+                ) : (
+                  <>
+                    Nothing here. Once two or more documents cover the same mine or block,
+                    click <b>Check again</b> to compare their figures.
+                  </>
+                )}
+              </EmptyState>
+            </Card>
+          )}
+          {shown.map((a) => (
+            <AnomalyCard key={a.id} a={a} />
+          ))}
+        </Col>
 
-      <div className="space-y-3">
-        {list.data?.items.map((a) => (
-          <AnomalyCard key={a.id} a={a} />
-        ))}
-      </div>
+        <Col span={4} className="space-y-4">
+          <Panel title="By kind" hint="all anomalies ever detected">
+            <BarList
+              data={Object.entries(all.data?.by_kind ?? {})
+                .sort((x, y) => y[1] - x[1])
+                .map(([k, v]) => ({ label: KIND_LABEL[k] ?? k, value: v }))}
+            />
+          </Panel>
+          <Panel title="By severity">
+            <BarList
+              data={(["high", "medium", "low"] as const)
+                .map((s) => ({
+                  label: s[0].toUpperCase() + s.slice(1),
+                  value: all.data?.by_severity?.[s] ?? 0,
+                  color: SEV_COLOR[s],
+                }))
+                .filter((d) => d.value > 0)}
+            />
+          </Panel>
+          <Panel title="What the kinds mean">
+            <ul className="space-y-1.5 text-xs text-muted">
+              <li><b className="text-fg">Figure revised</b> — same block, later report, different number.</li>
+              <li><b className="text-fg">Conflicting figures</b> — two sources, same period, different value.</li>
+              <li><b className="text-fg">Parts don&rsquo;t add up</b> — proved + indicated + inferred ≠ total.</li>
+              <li><b className="text-fg">Implausible value</b> — negative, or a percentage over 100.</li>
+              <li><b className="text-fg">Outlier</b> — far from the entity&rsquo;s own history.</li>
+            </ul>
+          </Panel>
+        </Col>
+      </Grid>
     </Page>
   );
 }
