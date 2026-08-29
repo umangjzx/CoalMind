@@ -8,6 +8,7 @@
     python scripts/dev.py corpus    # generate the synthetic sample corpus
     python scripts/dev.py ingest-samples  # push ml/sample_corpus/ through the pipeline
     python scripts/dev.py anomalies  # (re)scan the KG for historical-vs-new inconsistencies
+    python scripts/dev.py eval       # score classification + field extraction vs ground truth
     python scripts/dev.py api       # run the FastAPI dev server (reload)
     python scripts/dev.py web       # run the Vite dev server
     python scripts/dev.py test      # backend pytest
@@ -58,6 +59,7 @@ TASKS = {
                          "from app.services.topics import rebuild_topics as r; print(r())"),
     "anomalies": lambda: uv("python", "-c",
                             "from app.services.anomaly import scan_anomalies as s; print(s())"),
+    "eval": lambda: uv("python", str(ROOT / "scripts" / "eval_extraction.py")),
     "test": lambda: uv("pytest", "-q"),
     "lint": lambda: (uv("ruff", "check", ".") or run(["npm", "run", "lint"], cwd=FRONTEND)),
 }
@@ -68,7 +70,8 @@ def bootstrap() -> int:
         code = TASKS[name]()
         if code != 0:
             return code
-    print("\n✓ bootstrap complete — now run:  python scripts/dev.py api   (and, in another shell)  web")
+    print("\n✓ bootstrap complete — now run:  python scripts/dev.py api"
+          "   (and 'web' in another shell)")
     return 0
 
 

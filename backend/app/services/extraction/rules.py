@@ -21,6 +21,9 @@ from app.services.extraction.types import FieldCandidate
 from app.services.ingestion.page_extract import Page
 
 _NUM = r"(\d[\d,]*\.?\d*)"
+# a labelled value that runs to the end of the line OR to the next column (2+ spaces),
+# so "Mine : Nigahi Opencast        Date : 14.11.2023" yields just "Nigahi Opencast".
+_COL_VAL = r"([^\n]{3,60}?)(?=\s{2,}|\n|$)"
 
 
 @dataclass(slots=True)
@@ -56,10 +59,10 @@ SPECS: dict[str, list[Spec]] = {
              r"reserves as on\s*[:\-]?\s*([0-3]?\d[./-][0-1]?\d[./-](?:19|20)\d\d)",
              kind="date", base_conf=0.9),
         Spec("mine_name", "Mine / colliery",
-             r"(?:mine|colliery)\s*(?:/\s*colliery)?\s*[:\-]\s*([^\n]{3,60})",
+             rf"(?:mine|colliery)\s*(?:/\s*colliery)?\s*[:\-]\s*{_COL_VAL}",
              kind="text", entity_type="Mine", base_conf=0.8),
         Spec("block_name", "Block",
-             r"block\s*[:\-]\s*([^\n]{3,60})", kind="text", entity_type="Block", base_conf=0.8),
+             rf"block\s*[:\-]\s*{_COL_VAL}", kind="text", entity_type="Block", base_conf=0.8),
     ],
     "monthly_production_mis": [
         Spec("coal_production_actual", "Coal production (actual)",
@@ -73,7 +76,7 @@ SPECS: dict[str, list[Spec]] = {
         Spec("month", "Month",
              r"month\s*[:\-]\s*([A-Za-z]+\s+(?:19|20)\d\d)", kind="date", base_conf=0.9),
         Spec("mine_name", "Mine",
-             r"mine\s*[:\-]\s*([^\n]{3,60})", kind="text", entity_type="Mine", base_conf=0.8),
+             rf"mine\s*[:\-]\s*{_COL_VAL}", kind="text", entity_type="Mine", base_conf=0.8),
         Spec("shortfall_reason", "Reason for shortfall",
              r"reason (?:for )?shortfall\s*[:\-]\s*([^\n]{5,140})", kind="text", base_conf=0.7),
     ],
@@ -95,7 +98,7 @@ SPECS: dict[str, list[Spec]] = {
     ],
     "inspection_report": [
         Spec("mine_name", "Mine",
-             r"mine\s*[:\-]\s*([^\n]{3,60})", kind="text", entity_type="Mine", base_conf=0.8),
+             rf"mine\s*[:\-]\s*{_COL_VAL}", kind="text", entity_type="Mine", base_conf=0.8),
         Spec("inspection_date", "Inspection date",
              r"date\s*[:\-]?\s*([0-3]?\d[./-][0-1]?\d[./-](?:19|20)\d\d)",
              kind="date", base_conf=0.85),
@@ -119,7 +122,7 @@ SPECS: dict[str, list[Spec]] = {
              r"date completed\s*[:\-]?\s*([0-3]?\d[./-][0-1]?\d[./-](?:19|20)\d\d)",
              kind="date", base_conf=0.88),
         Spec("block_name", "Block",
-             r"block\s*[:\-]\s*([^\n]{3,60})", kind="text", entity_type="Block", base_conf=0.8),
+             rf"block\s*[:\-]\s*{_COL_VAL}", kind="text", entity_type="Block", base_conf=0.8),
         Spec("core_recovery_pct", "Core recovery",
              rf"core recovery\s*{_NUM}\s*%", unit="percent", base_conf=0.8),
     ],

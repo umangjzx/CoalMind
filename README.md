@@ -67,8 +67,14 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   the installed subset, Devanagari + roman-Hindi classifier keywords, answers returned
   in the question's language, a Hindi sample MIS. `python scripts/dev.py anomalies`.
 
-**Next: hardening & deploy — extraction-accuracy benchmark, perf/load validation,
-k8s/Helm for MeghRaj + CI, `hin.traineddata` for real Devanagari OCR.**
+- **Hardening:** `scripts/eval_extraction.py` (`dev.py eval`) — a DB-free
+  extraction-accuracy benchmark vs `ground_truth/` (classification, field P/R/F1 by
+  digital vs degraded-scan, coverage, effective accuracy after review), wired as a
+  pytest gate. Current sample-corpus score: 8/8 classification, F1 = 1.00, 81 % field
+  coverage.
+
+**Next: perf/load validation, k8s/Helm for MeghRaj + CI, `hin.traineddata` for real
+Devanagari OCR, full ui-ux design pass.**
 
 ## Repository layout
 
@@ -133,7 +139,13 @@ with db / storage / llm / embeddings all green.
 
 ```bash
 python scripts/dev.py up | down | migrate | seed | corpus | api | web | test | lint
+python scripts/dev.py ingest-samples | build-kg | anomalies | eval
 ```
+
+`dev.py eval` scores classification + field extraction against
+`ml/sample_corpus/ground_truth/` (no DB) — precision / recall / F1 split by digital vs
+degraded-scan, plus "effective accuracy after review". It is also a pytest regression
+gate (`tests/test_extraction_eval.py`).
 
 `make` equivalents exist in [`Makefile`](Makefile) for Linux/macOS/WSL.
 

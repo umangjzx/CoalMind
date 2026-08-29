@@ -353,7 +353,33 @@ it and Acknowledge/Resolve moves it between tabs; the Hindi MIS ingests, classif
 
 **Deps:** none added.
 
-**Deferred (post-hackathon):** extraction-accuracy benchmark harness vs
-`ground_truth/`; perf/load validation (<5 s cached, <20 s fresh); k8s / Helm manifests
-for MeghRaj + CI pipeline; installing `hin.traineddata` for real Devanagari OCR;
-full ui-ux-pro-max design-system pass across all screens.
+**Deferred (post-hackathon):** perf/load validation (<5 s cached, <20 s fresh); k8s /
+Helm manifests for MeghRaj + CI pipeline; installing `hin.traineddata` for real
+Devanagari OCR; full ui-ux-pro-max design-system pass across all screens.
+
+---
+
+## ✅ Hardening — extraction-accuracy benchmark
+
+- `scripts/eval_extraction.py` (+ `dev.py eval`) scores the sample corpus through the
+  real `extract_pages → classify → extract_fields` path with **no database**, so the
+  number is a pure function of code + corpus and safe for CI. Split digital vs
+  degraded-scan it reports: classification & language accuracy, field **precision /
+  recall / F1** over the fields the rules engine targets, **coverage** (share of
+  ground-truth fields even attempted), and **effective accuracy after review** —
+  `1 − (silent_error + silent_miss) / N`, where a *silent error* is a wrong value
+  auto-accepted ≥ threshold and a *silent miss* is a ground-truth field never
+  extracted (nothing queues it for a human).
+- `GT_ALIASES` maps every ground-truth key to the extractor key(s) that can produce
+  it; unmapped keys are counted as coverage gaps, not misses. Value comparison:
+  0.5 % numeric tolerance, date-parse-and-compare, and abbrev-aware token-subset for
+  text (so "Kusmunda OC" ≡ "Kusmunda Opencast").
+- Fixes it surfaced: `mine_name` / `block_name` rules were greedy across column gaps
+  ("Nigahi Opencast    Date : …") → new `_COL_VAL` pattern stops at a 2-space gap /
+  newline; the degraded-scan ground truth was a paraphrase, not the literal subject
+  line, and was missing `reference_no` / `letter_date` / revised+superseded figures.
+- `tests/test_extraction_eval.py` gates it: classification ≥ 85 %, digital F1 ≥ 0.90,
+  **zero silent errors / misses**, effective accuracy ≥ 0.95. Current sample-corpus
+  score: **8/8 classification, digital & degraded F1 = 1.00, coverage 81 %**
+  (9 ground-truth fields — `target_lakh_te`, `achievement_pct`, `question_topic`,
+  `seams_intersected`, … — are not yet targeted by a rule). **78 backend tests green.**

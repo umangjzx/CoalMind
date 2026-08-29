@@ -3,8 +3,18 @@
   "subsidiary": "WCL",
   "quality": "degraded_scan",
   "fields": {
-    "subject": "manganiferous horizon reserve estimate revision",
+    "subject": "Revision of reserve estimate - manganiferous horizon, Wani North",
     "mine": "Wani North",
+    "reference_no": "WCL/GEO/1998/337",
+    "letter_date": "1998-08-03",
+    "revised_value": {
+      "value": 1.42,
+      "unit": "million_tonnes"
+    },
+    "superseded_value": {
+      "value": 1.15,
+      "unit": "million_tonnes"
+    },
     "note": "OCR expected to be poor; routes to human review queue"
   }
 }
