@@ -29,6 +29,10 @@ dependencies = [
     "spacy>=3.8",
     "en-core-web-sm",
     "python-dateutil>=2.9",
+    # --- M3: report generation ---
+    "jinja2>=3.1",
+    "xhtml2pdf>=0.2.16",
+    "python-docx>=1.1",
 ]
 
 [project.optional-dependencies]

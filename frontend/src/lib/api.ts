@@ -1,10 +1,14 @@
 import type {
+  DiffResponse,
   DocumentDetail,
   DocumentListResponse,
   EntityDetail,
   EntityListResponse,
   GraphStats,
   HealthResponse,
+  ReportDetailT,
+  ReportListResponse,
+  ReportTemplate,
   ReviewActionKind,
   ReviewQueueResponse,
   ReviewResult,
@@ -82,6 +86,36 @@ export const api = {
       },
       body: JSON.stringify(body),
     }),
+
+  // --- M3: reports ---
+  reportTemplates: () => get<ReportTemplate[]>("/reports/templates"),
+  listReports: (status?: string) =>
+    get<ReportListResponse>(`/reports${status ? `?status=${status}` : ""}`),
+  getReport: (id: string) => get<ReportDetailT>(`/reports/${id}`),
+  createReport: (body: {
+    template_key: string;
+    params: Record<string, unknown>;
+    title?: string;
+  }) =>
+    req<ReportDetailT>("/reports", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  rerenderReport: (id: string) =>
+    req<ReportDetailT>(`/reports/${id}/rerender`, { method: "POST" }),
+  editReport: (id: string, content_md: string, summary: string) =>
+    req<ReportDetailT>(`/reports/${id}/edit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content_md, summary }),
+    }),
+  finalizeReport: (id: string) =>
+    req<ReportDetailT>(`/reports/${id}/finalize`, { method: "POST" }),
+  reportDiff: (id: string, from: number, to: number) =>
+    get<DiffResponse>(`/reports/${id}/diff?from=${from}&to=${to}`),
+  reportExportUrl: (id: string, format: "pdf" | "docx" | "html", version?: number) =>
+    `${BASE}/reports/${id}/export?format=${format}${version ? `&version=${version}` : ""}`,
 
   // --- M2: knowledge ---
   graphStats: () => get<GraphStats>("/knowledge/stats"),

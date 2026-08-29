@@ -109,21 +109,58 @@ force-directed visual yet (relation list only).
 
 ---
 
-## ▶ M3 — Module 1: Report Generation Platform    (FR-4, 5, 13)
+## ✅ M3 — Module 1: Report Generation Platform    (FR-4, 5, 13)
 
-- Jinja template engine; 4 templates: Parliamentary Q&A, Geological Reserve Status,
-  Monthly Production/MIS, Ad-hoc Inquiry.
-- Slot binding to KG queries / extracted fields; citation footnote
-  `{document_id, page_no, field_key}` on every figure.
-- Confidence-aware drafting: finalization blocked while any bound field is `needs_review`.
-- Draft versioning + AI-vs-human provenance diff.
-- Export: WeasyPrint (PDF) + python-docx (DOCX) in CIL-style layouts.
-- Frontend: **Report Builder** — template picker, live draft, click-citation → highlighted
-  scan, draft history, finalize/export.
+- Migration `0004_m3_reports`: `report` (template_key, status draft/in_review/final,
+  params, finalized_at/by) + append-only `report_version` (version_no, `author_kind`
+  ai|human, blocks, content_md, citations, unresolved).
+- **4 templates** (`app/services/reports/templates/`): Geological Reserve Status,
+  Parliamentary Q&A, Monthly Production/MIS, Ad-hoc Inquiry. Each declares a
+  `param_schema` the frontend renders as a form.
+- **Fact binding**: structure (block→mine→subsidiary, seam, grade) from the KG;
+  **figures pulled from the underlying `ExtractionField` rows** so a cited figure that
+  is still `needs_review` is caught live. `CitationCollector` assigns one `[[c:N]]`
+  marker per source field → `{document, page, field_key, snippet, confidence}`.
+- **Extractive-first narrative**: LLM (`get_llm`) given only the gathered facts +
+  markers, told never to invent a figure and to keep every marker; deterministic
+  fact-join fallback when the LLM is unavailable or drops citations
+  (`COALMIND_NARRATIVE_LLM=0` forces the fallback — used in tests).
+- **Confidence gate**: any cited `needs_review` field → report `status=in_review`,
+  listed in `unresolved`; `finalize` raises until they are verified (then `rerender`
+  clears them). Audit `report.{created,rerendered,edited,finalized}`.
+- **Draft history / provenance**: `rerender` appends an `ai` version; `edit` appends a
+  `human` version (submitted Markdown parsed back into blocks via `mdblocks`);
+  `version_diff` returns a unified diff labelled `v1 (ai) → v2 (human)`.
+- **Export**: `render_html` → **xhtml2pdf** (PDF, no system deps) + **python-docx**
+  (DOCX); citation markers become `[N]` with a numbered Sources list. HTML export too.
+- API `/reports/*`: `templates`, list, create, get, `versions/{n}`, `rerender`, `edit`,
+  `finalize`, `diff`, `export?format=pdf|docx|html`.
+- Frontend **Report Builder** (new nav item): template picker + dynamic param form,
+  rendered draft with **click-citation popovers** (snippet + confidence + open-source
+  link), unresolved-fields banner linking to the review queue, version bar, inline
+  Markdown edit → new version, version diff viewer (AI/human colour-coded), Finalise
+  (disabled while unresolved), PDF/DOCX buttons.
+- Tests: mdblocks round-trip + `blocks_to_markdown` (unit); create/cite-every-figure,
+  needs-review-blocks-finalize (+ verify→rerender→finalize), human-edit provenance +
+  diff, PDF/DOCX export (DB-backed). **42 backend tests green**; `tsc`/`eslint`/`vite
+  build` green.
+
+**Acceptance:** pick *Geological Reserve Status* + Jhanjra Block-II → draft with the 4
+reserve figures each cited to `…jhanjra_2021.pdf p.1` + an LLM paragraph that keeps the
+`[N]` markers; flip `proved_reserve` to needs_review → report goes *in_review*, Finalise
+blocked; verify it → *draft* → Finalise → *final*; PDF/DOCX download.
+
+**Deps:** `jinja2`, `xhtml2pdf`, `python-docx`. *(WeasyPrint swapped for xhtml2pdf to
+avoid GTK/Pango system deps on Windows; it is the fidelity upgrade for production.)*
+
+**Known limits (M4+):** templates tuned to the 4 types + current field keys; human
+edit is Markdown-level (no WYSIWYG); citation popover shows snippet + page link, not a
+pixel bbox overlay on the scan; parliamentary/ad-hoc pull figures broadly (officer
+reviews scope).
 
 ---
 
-## ⬚ M4 — Module 3: Query & Response System    (FR-7, 8, 9)
+## ▶ M4 — Module 3: Query & Response System    (FR-7, 8, 9)
 
 - Graph-aware retrieval (KG lookup + vector search) with role scoping (subsidiary + national).
 - Extractive-first answer composition over retrieved source spans; full source chain.

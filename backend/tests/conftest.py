@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 
 os.environ.setdefault("ALLOW_THIRD_PARTY_API", "true")
+# keep the report-engine tests fast + deterministic (no live LLM call for narrative prose)
+os.environ.setdefault("COALMIND_NARRATIVE_LLM", "0")
 
 import pytest
 from fastapi.testclient import TestClient

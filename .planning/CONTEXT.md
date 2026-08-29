@@ -26,7 +26,9 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | OCR / parse | Tesseract 5.5 + `pytesseract` (fallback), `pdfplumber` text + word bboxes (M1); `camelot` deferred |
 | NER | spaCy `en_core_web_sm` + mining gazetteer, keyword-gated ORG mentions (M1); fine-tuned transformer later |
 | Topic modeling | BERTopic + LDA fallback (M5) |
-| Report export | WeasyPrint (PDF), python-docx (DOCX) (M3) |
+| Report engine | 4 templates bind KG structure + live `ExtractionField` values; per-figure citations; extractive-first LLM narrative (`get_llm`) w/ deterministic fallback (`COALMIND_NARRATIVE_LLM=0`); confidence gate blocks finalize; append-only `report_version` ai/human + diff (M3) |
+| Report export | **xhtml2pdf** (PDF — pure-python, no GTK) + `python-docx` (DOCX) + HTML (M3); WeasyPrint is the production fidelity upgrade |
+| Faster LLM | point `OLLAMA_BASE_URL` at a GPU-hosted Ollama (e.g. Colab T4 + ngrok/cloudflared tunnel) — config only, no code change |
 | Frontend | React 18 + Vite 6 + TS + Tailwind 3, TanStack Query, React Router |
 | Design | tokens are a neutral baseline now; full **ui-ux-pro-max** design pass in M7 (and per-screen as milestones build UI) |
 | Auth/RBAC | JWT + per-subsidiary row scoping (M6); models stubbed in M0 |

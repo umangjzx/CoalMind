@@ -46,7 +46,7 @@ cached answer <5s, fresh RAG <20s.
 
 ## Status
 
-**M0 + M1 + M2 complete.**
+**M0 + M1 + M2 + M3 complete.**
 - M0: monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton, LLM + embeddings
   provider abstractions, audit writer, baseline migration + seed, sample corpus, React shell.
 - M1: document upload + dedupe, classify → OCR/text extract → rule + NER field extraction
@@ -56,7 +56,11 @@ cached answer <5s, fresh RAG <20s.
   resolver builds the domain graph from *accepted* extractions with provenance + temporal
   stamps; chunker + embedder; graph + vector query helpers; `/knowledge/*` API; pipeline
   + review integration (verified facts flow in); **Knowledge Graph** UI + semantic search.
+- M3: `report`/`report_version` models; 4 templates binding to the KG + live
+  `ExtractionField` status; per-figure citations; extractive-first LLM narrative with
+  deterministic fallback; confidence-gated finalize; AI-vs-human draft history + diff;
+  HTML/PDF (xhtml2pdf)/DOCX export; `/reports/*` API; **Report Builder** UI.
 
-Next: **M3 — Module 1: Report Generation Platform** (templates, cited fact assembly,
-confidence-gated finalize, AI-vs-human provenance, PDF/DOCX export). Roadmap:
+Next: **M4 — Module 3: Query & Response System** (graph-aware RAG, extractive-first
+cited answers, decline-on-low-confidence, verified-answer cache). Roadmap:
 [`ROADMAP.md`](ROADMAP.md).

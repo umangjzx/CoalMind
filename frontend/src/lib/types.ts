@@ -192,3 +192,103 @@ export interface GraphStats {
   relations_by_predicate: Record<string, number>;
   chunks: number;
 }
+
+// --- M3: report generation ---
+
+export interface TemplateParam {
+  name: string;
+  label: string;
+  type: "text" | "date" | "select";
+  required: boolean;
+  options?: { value: string; label: string }[];
+  help?: string;
+}
+
+export interface ReportTemplate {
+  key: string;
+  title: string;
+  description: string;
+  param_schema: TemplateParam[];
+}
+
+export type ReportStatusT = "draft" | "in_review" | "final";
+
+export interface ReportBlock {
+  type: "heading" | "paragraph" | "table" | "kv";
+  text?: string;
+  level?: number;
+  columns?: string[];
+  rows?: string[][];
+  items?: { label: string; value: string }[];
+  editable?: boolean;
+}
+
+export interface ReportCitation {
+  marker: number;
+  extraction_field_id: string | null;
+  document_id: string | null;
+  document_filename: string | null;
+  page_no: number | null;
+  field_key: string;
+  value: string;
+  snippet: string;
+  confidence: number;
+}
+
+export interface ReportUnresolved {
+  extraction_field_id: string;
+  field_key: string;
+  label: string;
+  document_id: string;
+  reason: string;
+}
+
+export interface ReportVersionT {
+  id: string;
+  version_no: number;
+  author_kind: "ai" | "human";
+  author_id: string | null;
+  summary: string;
+  blocks: ReportBlock[];
+  content_md: string;
+  citations: ReportCitation[];
+  unresolved: ReportUnresolved[];
+  created_at: string;
+}
+
+export interface ReportVersionSummary {
+  id: string;
+  version_no: number;
+  author_kind: "ai" | "human";
+  summary: string;
+  created_at: string;
+  unresolved_count: number;
+}
+
+export interface ReportT {
+  id: string;
+  title: string;
+  template_key: string;
+  status: ReportStatusT;
+  params: Record<string, unknown>;
+  subsidiary_id: string | null;
+  current_version_id: string | null;
+  finalized_at: string | null;
+  created_at: string;
+}
+
+export interface ReportDetailT extends ReportT {
+  current_version: ReportVersionT | null;
+  versions: ReportVersionSummary[];
+}
+
+export interface ReportListResponse {
+  items: ReportT[];
+  total: number;
+}
+
+export interface DiffResponse {
+  from_: { version_no: number; author_kind: string };
+  to: { version_no: number; author_kind: string };
+  unified: string;
+}

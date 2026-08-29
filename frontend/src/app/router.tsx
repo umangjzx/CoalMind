@@ -4,12 +4,14 @@ import { AppShell } from "@/app/AppShell";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { IngestionPage } from "@/features/ingestion/IngestionPage";
 import { KnowledgePage } from "@/features/knowledge/KnowledgePage";
+import { ReportsPage } from "@/features/reports/ReportsPage";
 import { PlaceholderPage } from "@/features/PlaceholderPage";
 import { NAV } from "@/app/nav";
 
 const BUILT: Record<string, ReactElement> = {
   "/ingestion": <IngestionPage />,
   "/knowledge": <KnowledgePage />,
+  "/reports": <ReportsPage />,
 };
 
 const featureRoutes = NAV.filter((n) => n.to !== "/").map((n) => ({

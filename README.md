@@ -17,7 +17,7 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
 - Architecture: [`docs/architecture.md`](docs/architecture.md) · Domain model: [`docs/entity-schema.md`](docs/entity-schema.md)
 - Roadmap & status: [`.planning/ROADMAP.md`](.planning/ROADMAP.md) · Decisions: [`.planning/CONTEXT.md`](.planning/CONTEXT.md)
 
-## Status — M0 + M1 complete
+## Status — M0 + M1 + M2 + M3 complete
 
 - **M0 (scaffold):** monorepo, infra, FastAPI skeleton (`/health`, `/version`), LLM &
   embeddings provider abstractions (Ollama default · Anthropic gated by a sovereignty
@@ -33,8 +33,15 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
   index over document chunks. `/knowledge/*` API, a **Knowledge Graph** screen with
   entity browser + relation navigation + **semantic search**. Verified review decisions
   flow into the graph. `python scripts/dev.py build-kg` (re)builds it.
+- **M3 (report generation):** 4 templates (Reserve Status, Parliamentary Q&A, Monthly
+  MIS, Ad-hoc Inquiry) bind to the graph + live `ExtractionField` status. Every figure
+  is **cited** to its document/page; **extractive-first LLM narrative** (deterministic
+  fallback) keeps the markers. Low-confidence figures put the report *in_review* and
+  **block finalisation** until verified. Append-only version history separates **AI vs
+  human** edits with a diff. **PDF / DOCX / HTML export**. `/reports/*` API + the
+  **Report Builder** screen.
 
-**Next: M3 — Report Generation Platform.**
+**Next: M4 — Query & Response System (graph-aware RAG).**
 
 ## Repository layout
 
@@ -55,6 +62,12 @@ docker-compose.yml   Postgres 16 + pgvector, MinIO
   **Node 20+** · **Tesseract** (M1+) · **Ollama** running locally with a model pulled
   (`ollama pull mistral`) for the LLM checks to go green.
 
+**Faster LLM (optional).** CPU Ollama makes report-narrative generation slow (~10–20 s).
+Point the backend at a GPU-hosted Ollama instead — no code change, just:
+`OLLAMA_BASE_URL=https://<your-tunnel>` in `.env`. A Colab **T4** running
+`ollama serve` behind an `ngrok` / `cloudflared` tunnel works well for demos.
+Set `COALMIND_NARRATIVE_LLM=0` to skip the LLM entirely (deterministic cited prose).
+
 ## Quick start
 
 ```bash
@@ -67,10 +80,10 @@ python scripts/dev.py api               # FastAPI on http://localhost:8000  (/do
 python scripts/dev.py web               # Vite on   http://localhost:5173   (another shell)
 ```
 
-Open **Ingestion & Review**: every sample is classified, its reserve / production
-figures extracted with a confidence score and source citation, low-confidence fields
-queued for verification. Then **Knowledge Graph**: browse the resulting mines / blocks /
-reserves and try the semantic search.
+Walk the pipeline in the app: **Ingestion & Review** (classify → extract → verify
+low-confidence fields) → **Knowledge Graph** (browse the mines/blocks/reserves the
+verified facts produced, semantic search) → **Report Builder** (generate a cited,
+confidence-gated Reserve Status / Parliamentary Q&A draft and export it to PDF/DOCX).
 
 Then open <http://localhost:5173> — the header health badge should read **backend ok**
 with db / storage / llm / embeddings all green.
