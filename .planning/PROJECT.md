@@ -46,7 +46,12 @@ cached answer <5s, fresh RAG <20s.
 
 ## Status
 
-**M0 complete** — monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton with
-health/version, LLM + embeddings provider abstractions (Ollama/Anthropic, fastembed),
-audit writer, baseline migration + seed, synthetic sample corpus, React shell.
-Next: **M1 — Ingestion & Extraction**. Roadmap: [`ROADMAP.md`](ROADMAP.md).
+**M0 + M1 complete.**
+- M0: monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton, LLM + embeddings
+  provider abstractions, audit writer, baseline migration + seed, sample corpus, React shell.
+- M1: document upload + dedupe, classify → OCR/text extract → rule + NER field extraction
+  with per-field confidence + bbox traceability, threshold routing to a human review
+  queue, business-rule validation, review API + **Ingestion & Review** UI, full audit trail.
+
+Next: **M2 — Knowledge layer** (kg_entity/kg_relation + pgvector index). Roadmap:
+[`ROADMAP.md`](ROADMAP.md).

@@ -14,3 +14,106 @@ export interface VersionResponse {
   embed_provider: string;
   allow_third_party_api: boolean;
 }
+
+// --- M1: ingestion & extraction ---
+
+export type DocStatus =
+  | "received"
+  | "processing"
+  | "extracted"
+  | "needs_review"
+  | "ready"
+  | "failed";
+
+export type FieldStatus = "auto_accepted" | "needs_review" | "verified" | "rejected";
+
+export interface PipelineMeta {
+  pages?: number;
+  ocr_pages?: number;
+  fields_extracted?: number;
+  fields_needs_review?: number;
+  threshold?: number;
+  doc_notes?: string[];
+  classified_as?: string;
+}
+
+export interface DocumentOut {
+  id: string;
+  original_filename: string;
+  content_type: string;
+  sha256: string;
+  size_bytes: number;
+  page_count: number | null;
+  doc_type: string | null;
+  language: string | null;
+  doc_date: string | null;
+  status: DocStatus;
+  error: string;
+  processed_at: string | null;
+  meta: { pipeline?: PipelineMeta } & Record<string, unknown>;
+  subsidiary_id: string | null;
+  created_at: string;
+}
+
+export interface FieldOut {
+  id: string;
+  field_key: string;
+  label: string;
+  value_text: string;
+  original_value_text: string;
+  value_json: Record<string, unknown> | null;
+  entity_type: string | null;
+  extractor: string;
+  source_kind: string;
+  page_no: number | null;
+  bbox: Record<string, number> | null;
+  source_snippet: string;
+  confidence: number;
+  status: FieldStatus;
+  review_note: string;
+  reviewed_at: string | null;
+}
+
+export interface DocumentDetail extends DocumentOut {
+  fields: FieldOut[];
+}
+
+export interface DocumentListResponse {
+  items: DocumentOut[];
+  total: number;
+}
+
+export interface ReviewQueueItem {
+  id: string;
+  document_id: string;
+  document_filename: string;
+  doc_type: string | null;
+  field_key: string;
+  label: string;
+  value_text: string;
+  value_json: Record<string, unknown> | null;
+  entity_type: string | null;
+  source_kind: string;
+  page_no: number | null;
+  bbox: Record<string, number> | null;
+  source_snippet: string;
+  confidence: number;
+  review_note: string;
+  status: FieldStatus;
+}
+
+export interface ReviewQueueResponse {
+  items: ReviewQueueItem[];
+  total: number;
+}
+
+export type ReviewActionKind = "confirm" | "correct" | "reject";
+
+export interface ReviewResult {
+  id: string;
+  status: FieldStatus;
+  value_text: string;
+  document_id: string;
+  document_status: DocStatus;
+  reviewed_at: string | null;
+}

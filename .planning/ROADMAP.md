@@ -23,27 +23,48 @@ loads, `/health` green (db/storage/llm/embeddings), `pytest` + `tsc` + `vite bui
 
 ---
 
-## ▶ M1 — Ingestion & Extraction pipeline    (FR-1, 2, 3, 5, 10, 15)
+## ✅ M1 — Ingestion & Extraction pipeline    (FR-1, 2, 3, 5, 10, 15)
 
-- `POST /ingestion/documents` (single + bulk) → MinIO store, SHA-256 dedupe, `Document` row.
-- `app/workers/` background runner (arq + Redis) — pipeline runs off the request path.
-- Document classifier (doc_type, language); OCR via Tesseract (`pytesseract`), digital
-  PDF text via `pdfplumber`, tables via `pdfplumber`/`camelot`.
-- Mining-domain NER: spaCy pipeline + gazetteers (seam names, borehole IDs, RoM grades) →
-  candidate `ExtractionField` rows with `{page_no, bbox, source_snippet}`.
-- Per-field confidence score; `CONFIDENCE_THRESHOLD` routing → `auto_accepted` vs
-  `needs_review`; document status transitions.
-- Business-rule validation vs existing records for the same entity.
-- Review queue: `GET /review/queue`, `POST /review/fields/{id}` (confirm/correct/reject),
-  audit `field.verified` with old/new value + actor.
-- Frontend: **Ingestion & Review** screen — bulk upload, queue table, source-region
-  highlight on the original scan.
-- Batch/offline ingestion endpoint (FR-15).
-- Deps added: `pytesseract`, `pdfplumber`, `camelot-py`, `spacy` (+ model), `pillow`, `redis`.
+- `POST /ingestion/documents` (single + bulk multipart) → content-addressed MinIO store,
+  SHA-256 dedupe, `Document` row; `GET` list/detail, `/file` (presigned), `/reprocess`.
+- Self-contained pipeline `run_pipeline(document_id)` run as a FastAPI `BackgroundTask`
+  and from a CLI (`app.workers.ingest_cli`; `dev.py ingest-samples` / `--reprocess`).
+  *(arq + Redis queue deferred — not needed at hackathon scale; swap-in point is ready.)*
+- `page_extract`: pdfplumber text + word bboxes; **Tesseract OCR fallback** for pages with
+  no text layer and for image uploads (per-word OCR confidence captured).
+- Rule-based classifier (6 CIL doc types + language + as-on date).
+- Extraction: table-driven regex `Spec`s per doc type + spaCy NER + mining gazetteer
+  (seam / borehole ID / grade / subsidiary) → `ExtractionField` rows with
+  `{page_no, bbox{unit,page_w,page_h,dpi}, source_snippet}`, `extractor`, `source_kind`.
+- `confidence.score`: OCR penalty (informed by Tesseract per-word conf), context damping,
+  ≤0.97 cap. `CONFIDENCE_THRESHOLD` routes `auto_accepted` vs `needs_review`; document
+  status transitions (`received→processing→needs_review|ready|extracted|failed`).
+- Business-rule `validate`: reserve categories vs stated total, date plausibility,
+  percentage range → lowers confidence + attaches note (→ review queue).
+- Review queue: `GET /review/queue`, `POST /review/fields/{id}` (confirm / correct /
+  reject) → `verified`/`rejected`, keeps `original_value_text`, recomputes doc status,
+  audit `field.{action}` with before/after + actor (`X-Actor-Email` until M6 auth).
+- Frontend **Ingestion & Review**: drag-drop upload, live documents table, review queue
+  with inline confirm/correct/reject + confidence bars + source snippet + "open source"
+  link (`#page=N`), document drawer showing all fields + pipeline notes.
+- Tests: classifier, extraction rules + validation + OCR damping (unit); review flow +
+  audit (DB-backed, auto-skip offline). 28 backend tests green; `tsc`/`eslint` green.
+
+**Acceptance:** `dev.py ingest-samples` classifies all 6 corpus docs, extracts the
+ground-truth reserve/production figures with citations, routes low-confidence + NER
+mentions to review; UI confirm decrements the queue and writes an audit row.
+
+**Deps added:** `pdfplumber`, `pypdf`, `pytesseract`, `pillow`, `spacy` + `en_core_web_sm`,
+`python-dateutil`. *(`camelot`/`redis` deferred.)*
+
+**Known limits (M2+):** validation cross-checks are intra-document only (historical KG
+comparison needs M2); bbox is stored but the UI shows snippet + page link, not a pixel
+overlay (M3 Report Builder); background tasks block a worker thread under burst — fine
+here, queue worker is the scale path.
 
 ---
 
-## ⬚ M2 — Knowledge layer    (foundation for FR-7)
+## ▶ M2 — Knowledge layer    (foundation for FR-7)
 
 - `kg_entity` + `kg_relation` tables (typed, temporally valid — `valid_from`/`valid_to`).
 - Entity resolution / linking from accepted `ExtractionField` rows → nodes + edges.

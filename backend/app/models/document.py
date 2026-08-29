@@ -11,7 +11,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -56,7 +56,9 @@ class Document(UUIDPk, Timestamps, Base):
     status: Mapped[DocumentStatus] = mapped_column(
         Enum(DocumentStatus, name="document_status"), default=DocumentStatus.received, index=True
     )
-    meta: Mapped[dict] = mapped_column(JSONB, default=dict)
+    error: Mapped[str] = mapped_column(Text, default="")  # populated when status == failed
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    meta: Mapped[dict] = mapped_column(JSONB, default=dict)  # pipeline stats, ocr flags, etc.
 
     subsidiary_id: Mapped[uuid.UUID | None] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("subsidiary.id", ondelete="SET NULL"), nullable=True
@@ -80,14 +82,22 @@ class ExtractionField(UUIDPk, Timestamps, Base):
 
     # what was extracted
     field_key: Mapped[str] = mapped_column(String(128), index=True)  # e.g. "proved_reserve_mt"
+    label: Mapped[str] = mapped_column(String(160), default="")  # human-friendly field name
+    # current value — may have been corrected by a reviewer
     value_text: Mapped[str] = mapped_column(Text, default="")
     value_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # normalized value/unit
     # entity kind: Mine / Block / Seam / Mineral / ...
     entity_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
+    # provenance of the extraction itself
+    # provenance: rule id / "spacy_ner" / "gazetteer"
+    extractor: Mapped[str] = mapped_column(String(64), default="")
+    source_kind: Mapped[str] = mapped_column(String(16), default="pdf_text")  # pdf_text | ocr | ner
+
     # traceability — where in the source it came from
     page_no: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    bbox: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # [x0,y0,x1,y1] in page units
+    # {"x0","y0","x1","y1","unit":"pt"|"px","page_width","page_height","dpi"?}
+    bbox: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     source_snippet: Mapped[str] = mapped_column(Text, default="")
 
     # confidence-aware drafting
@@ -95,6 +105,12 @@ class ExtractionField(UUIDPk, Timestamps, Base):
     status: Mapped[FieldStatus] = mapped_column(
         Enum(FieldStatus, name="field_status"), default=FieldStatus.needs_review, index=True
     )
+
+    # human review (M1)
+    # what the extractor originally produced (kept when a reviewer corrects value_text)
+    original_value_text: Mapped[str] = mapped_column(Text, default="")
+    review_note: Mapped[str] = mapped_column(Text, default="")
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reviewed_by_id: Mapped[uuid.UUID | None] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("app_user.id", ondelete="SET NULL"), nullable=True
     )

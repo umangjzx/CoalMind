@@ -17,13 +17,19 @@ every answer traceable to `{document, page, bounding box}` in ≤2 clicks.
 - Architecture: [`docs/architecture.md`](docs/architecture.md) · Domain model: [`docs/entity-schema.md`](docs/entity-schema.md)
 - Roadmap & status: [`.planning/ROADMAP.md`](.planning/ROADMAP.md) · Decisions: [`.planning/CONTEXT.md`](.planning/CONTEXT.md)
 
-## Status — M0 complete (scaffold)
+## Status — M0 + M1 complete
 
-Monorepo, infra, FastAPI skeleton with `/health` + `/version`, LLM & embeddings provider
-abstractions (Ollama default · Anthropic gated by a sovereignty flag · fastembed for
-on-prem embeddings), content-addressed MinIO store, append-only hash-chained audit
-writer, baseline DB migration + seed, a synthetic sample corpus, and a React shell
-wiring the six module screens. **Next: M1 — Ingestion & Extraction.**
+- **M0 (scaffold):** monorepo, infra, FastAPI skeleton (`/health`, `/version`), LLM &
+  embeddings provider abstractions (Ollama default · Anthropic gated by a sovereignty
+  flag · fastembed on-prem), content-addressed MinIO store, hash-chained audit writer,
+  baseline migration + seed, synthetic sample corpus, React shell.
+- **M1 (ingestion & extraction):** upload API with SHA-256 dedupe → classify → pdfplumber
+  text / Tesseract OCR → rule + spaCy-NER field extraction with per-field **confidence**
+  and `{page, bbox, snippet}` traceability → threshold routing to a **human review
+  queue** → business-rule validation → review API + **Ingestion & Review** screen, all
+  audited. `python scripts/dev.py ingest-samples` runs the corpus through it.
+
+**Next: M2 — Knowledge layer.**
 
 ## Repository layout
 
@@ -49,10 +55,15 @@ docker-compose.yml   Postgres 16 + pgvector, MinIO
 ```bash
 cp .env.example .env          # host Postgres on 5432? .env already maps container -> 5433
 
-python scripts/dev.py bootstrap   # docker compose up + migrate + seed + sample corpus
-python scripts/dev.py api          # FastAPI on http://localhost:8000  (/docs, /health)
-python scripts/dev.py web          # Vite on   http://localhost:5173   (in another shell)
+python scripts/dev.py bootstrap        # docker compose up + migrate + seed + sample corpus
+python scripts/dev.py ingest-samples   # run the 6 sample docs through the M1 pipeline
+python scripts/dev.py api               # FastAPI on http://localhost:8000  (/docs, /health)
+python scripts/dev.py web               # Vite on   http://localhost:5173   (another shell)
 ```
+
+Open **Ingestion & Review** in the app: every sample is classified, its reserve /
+production figures extracted with a confidence score and source citation, and the
+low-confidence fields queued for verification.
 
 Then open <http://localhost:5173> — the header health badge should read **backend ok**
 with db / storage / llm / embeddings all green.

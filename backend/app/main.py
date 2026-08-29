@@ -29,8 +29,19 @@ async def lifespan(app: FastAPI):
         get_object_store_bucket()
     except Exception as exc:  # noqa: BLE001 — non-fatal at boot
         log.warning("object store not ready at startup: %s", exc)
+    _warm_models()
     yield
     log.info("CoalMind backend shutting down")
+
+
+def _warm_models() -> None:
+    """Load the spaCy pipeline once at boot so the first ingestion isn't slow."""
+    try:
+        from app.services.extraction.ner import _nlp
+
+        _nlp()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("model warmup skipped: %s", exc)
 
 
 def get_object_store_bucket() -> None:

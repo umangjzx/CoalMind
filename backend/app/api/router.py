@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.routes import health
+from app.api.routes import health, ingestion, review
 
 api_router = APIRouter()
 api_router.include_router(health.router)
+api_router.include_router(ingestion.router, prefix="/ingestion")
+api_router.include_router(review.router, prefix="/review")
 
-# M1: api_router.include_router(ingestion.router, prefix="/ingestion")
-# M1: api_router.include_router(review.router, prefix="/review")
 # M3: api_router.include_router(reports.router, prefix="/reports")
 # M4: api_router.include_router(query.router, prefix="/query")
 # M5: api_router.include_router(topics.router, prefix="/topics")

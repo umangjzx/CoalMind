@@ -21,9 +21,9 @@ Standing decisions the roadmap assumes. Update when a decision changes; don't re
 | Object store | MinIO (S3-compatible), content-addressed by SHA-256 |
 | LLM | `LLMProvider` protocol → `OllamaProvider` (`mistral`, default) / `AnthropicProvider` (gated) |
 | Embeddings | `Embedder` protocol → `FastEmbedEmbedder` (`BAAI/bge-small-en-v1.5`, 384-d, default) / `OllamaEmbedder` |
-| Background jobs | arq + Redis (added M1) |
-| OCR / parse | Tesseract 5.5 + `pytesseract`, `pdfplumber`, `camelot` (M1) |
-| NER | spaCy + domain gazetteers (M1); fine-tuned transformer later |
+| Background jobs | FastAPI `BackgroundTasks` running `run_pipeline()` (M1); arq + Redis is the scale swap-in, not yet added |
+| OCR / parse | Tesseract 5.5 + `pytesseract` (fallback), `pdfplumber` text + word bboxes (M1); `camelot` deferred |
+| NER | spaCy `en_core_web_sm` + mining gazetteer, keyword-gated ORG mentions (M1); fine-tuned transformer later |
 | Topic modeling | BERTopic + LDA fallback (M5) |
 | Report export | WeasyPrint (PDF), python-docx (DOCX) (M3) |
 | Frontend | React 18 + Vite 6 + TS + Tailwind 3, TanStack Query, React Router |

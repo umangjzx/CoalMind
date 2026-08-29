@@ -21,6 +21,14 @@ dependencies = [
     "anthropic>=0.39",
     "arq>=0.26",
     "tenacity>=9.0",
+    # --- M1: ingestion & extraction ---
+    "pdfplumber>=0.11",
+    "pypdf>=5.1",
+    "pytesseract>=0.3.13",
+    "pillow>=10.4",
+    "spacy>=3.8",
+    "en-core-web-sm",
+    "python-dateutil>=2.9",
 ]
 
 [project.optional-dependencies]
@@ -30,11 +38,13 @@ dev = [
     "ruff>=0.8",
     # sample-corpus generation (scripts/gen_sample_corpus.py)
     "reportlab>=4.2",
-    "pillow>=10.4",
 ]
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 
 [tool.ruff]
 line-length = 100
@@ -42,6 +52,8 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+# B008: FastAPI's Depends()/File()/Form() in argument defaults is the intended idiom.
+ignore = ["B008"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
