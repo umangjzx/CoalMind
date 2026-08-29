@@ -1,0 +1,11 @@
+{
+  "doc_type": "inspection_report",
+  "subsidiary": "NCL",
+  "mine": "Nigahi OC",
+  "date": "2023-11-14",
+  "fields": {
+    "finding": "belt conveyor BC-3 idler damage and spillage",
+    "risk_rating": "high",
+    "action_due": "2023-11-30"
+  }
+}

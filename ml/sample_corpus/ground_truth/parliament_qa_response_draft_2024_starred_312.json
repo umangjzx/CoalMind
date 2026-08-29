@@ -1,0 +1,17 @@
+{
+  "doc_type": "parliamentary_qa_response",
+  "subsidiary": "CIL",
+  "reference": "Starred Question No. 312",
+  "date": "2024-07-25",
+  "fields": {
+    "question_topic": "coal production shortfall in eastern subsidiaries",
+    "cil_production_mt_fy24": {
+      "value": 773.6,
+      "unit": "million_tonnes"
+    },
+    "cil_target_mt_fy24": {
+      "value": 780.0,
+      "unit": "million_tonnes"
+    }
+  }
+}

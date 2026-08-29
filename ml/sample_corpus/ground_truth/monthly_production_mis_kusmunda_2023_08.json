@@ -1,0 +1,24 @@
+{
+  "doc_type": "monthly_production_mis",
+  "subsidiary": "SECL",
+  "mine": "Kusmunda OC",
+  "month": "2023-08",
+  "fields": {
+    "coal_production_lakh_te": {
+      "value": 18.63,
+      "unit": "lakh_tonnes"
+    },
+    "target_lakh_te": {
+      "value": 20.0,
+      "unit": "lakh_tonnes"
+    },
+    "achievement_pct": {
+      "value": 93.2,
+      "unit": "percent"
+    },
+    "overburden_removal_lakh_cum": {
+      "value": 41.9,
+      "unit": "lakh_cubic_metre"
+    }
+  }
+}

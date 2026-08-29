@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Semantic color tokens. Values are "R G B" triplets so Tailwind's
+ * `rgb(var(--token) / <alpha-value>)` works. Light theme on :root,
+ * dark theme under .dark (toggled on <html>).
+ * These are a sane neutral government-dashboard baseline; a ui-ux-pro-max
+ * design pass replaces them with the finalized palette in a later milestone.
+ */
+:root {
+  --c-bg: 248 250 252; /* slate-50 */
+  --c-surface: 255 255 255;
+  --c-surface-2: 241 245 249; /* slate-100 */
+  --c-border: 226 232 240; /* slate-200 */
+  --c-fg: 15 23 42; /* slate-900 */
+  --c-muted: 100 116 139; /* slate-500 */
+  --c-brand: 29 78 216; /* blue-700 */
+  --c-brand-fg: 255 255 255;
+  --c-ok: 21 128 61; /* green-700 */
+  --c-warn: 180 83 9; /* amber-700 */
+  --c-danger: 185 28 28; /* red-700 */
+}
+
+.dark {
+  --c-bg: 15 23 42; /* slate-900 */
+  --c-surface: 30 41 59; /* slate-800 */
+  --c-surface-2: 51 65 85; /* slate-700 */
+  --c-border: 51 65 85; /* slate-700 */
+  --c-fg: 241 245 249; /* slate-100 */
+  --c-muted: 148 163 184; /* slate-400 */
+  --c-brand: 96 165 250; /* blue-400 */
+  --c-brand-fg: 15 23 42;
+  --c-ok: 74 222 128;
+  --c-warn: 251 191 36;
+  --c-danger: 248 113 113;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg text-fg font-sans antialiased;
+}

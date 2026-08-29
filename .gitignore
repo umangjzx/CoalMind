@@ -1,0 +1,43 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.log
+
+# --- Node ---
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Data / runtime ---
+data/
+*.sqlite
+*.sqlite3
+backend/app/**/local_models/
+ml/models/
+ml/sample_corpus/*.pdf
+ml/sample_corpus/*.png
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- Claude Code tooling (gsd-core + ui-ux-pro-max) ---
+# Re-install per checkout:
+#   npx @opengsd/gsd-core@latest --claude --local
+#   npm i -g ui-ux-pro-max-cli && uipro init --ai claude
+# Project planning artifacts live in .planning/ and ARE tracked.
+.claude/

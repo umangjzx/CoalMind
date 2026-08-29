@@ -1,0 +1,10 @@
+{
+  "doc_type": "correspondence",
+  "subsidiary": "WCL",
+  "quality": "degraded_scan",
+  "fields": {
+    "subject": "manganiferous horizon reserve estimate revision",
+    "mine": "Wani North",
+    "note": "OCR expected to be poor; routes to human review queue"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "doc_type": "geological_reserve_status",
+  "subsidiary": "ECL",
+  "mine": "Jhanjra",
+  "block": "Jhanjra Block-II",
+  "as_on": "2021-04-01",
+  "fields": {
+    "proved_reserve_mt": {
+      "value": 182.4,
+      "unit": "million_tonnes"
+    },
+    "indicated_reserve_mt": {
+      "value": 64.1,
+      "unit": "million_tonnes"
+    },
+    "inferred_reserve_mt": {
+      "value": 21.7,
+      "unit": "million_tonnes"
+    },
+    "seam": "R-VII",
+    "avg_grade": "G6"
+  }
+}

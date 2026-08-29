@@ -1,0 +1,15 @@
+{
+  "doc_type": "borehole_log_summary",
+  "subsidiary": "MCL",
+  "mine": "Talcher",
+  "block": "Talcher Expansion Block-A",
+  "fields": {
+    "borehole_id": "BH-TAL-A-047",
+    "total_depth_m": {
+      "value": 412.5,
+      "unit": "metre"
+    },
+    "seams_intersected": 3,
+    "principal_seam": "Seam-IV Bottom"
+  }
+}

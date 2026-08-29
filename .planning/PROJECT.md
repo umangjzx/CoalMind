@@ -1,0 +1,52 @@
+# PROJECT — CoalMind AI
+
+> gsd-core project brief. Full spec: [`docs/PRD.md`](../docs/PRD.md).
+
+## One-liner
+
+A traceability-first document-intelligence and knowledge-management platform for
+CMPDI / Coal India Limited that turns decades of geological, mining and production
+documents into cited, parliament-ready reports and answerable knowledge.
+
+## Problem
+
+CMPDI/CIL officers answer parliamentary and administrative inquiries by manually digging
+through scanned PDFs, spreadsheets, images and paper archives. Slow, inconsistent,
+error-prone, and dependent on individual expertise (SIH 26023).
+
+## Outcome we're building toward
+
+- Every AI-produced fact is traceable to `{document, page, bounding box}` in ≤2 clicks.
+- Low-confidence extractions never silently enter a report — human verifies first.
+- Officers ask in natural language and get cited draft answers/reports the same day.
+- Runs on-premise (sovereign): open-weight LLM by default, no hosted API on sensitive data.
+- One subsidiary-scale pipeline that architecturally scales to all 8 subsidiaries.
+
+## Mandated deliverables (PS)
+
+1. Automated Report Generation Platform  → milestone **M3**
+2. Word Cloud & Topic Identification Module  → milestone **M5**
+3. AI-Based Query & Response System  → milestone **M4**
+
+## Personas
+
+Reporting Officer (CMPDI) · Subsidiary Geologist · Ministry of Coal Official ·
+CIL Data/IT Admin · Field/Records Clerk. See PRD §5.
+
+## Non-goals (hackathon)
+
+Live IoT/SCADA telemetry · replacing statutory sign-off · full national rollout in the
+build (architect for it, don't ship it).
+
+## Success metrics
+
+Report compile time days→hours · ≥90% extraction accuracy (digital) / ≥75% (degraded) ·
+70–80% of report content auto-drafted (human signs 100%) · 100% of AI figures cited ·
+cached answer <5s, fresh RAG <20s.
+
+## Status
+
+**M0 complete** — monorepo, infra (Postgres+pgvector, MinIO), FastAPI skeleton with
+health/version, LLM + embeddings provider abstractions (Ollama/Anthropic, fastembed),
+audit writer, baseline migration + seed, synthetic sample corpus, React shell.
+Next: **M1 — Ingestion & Extraction**. Roadmap: [`ROADMAP.md`](ROADMAP.md).
