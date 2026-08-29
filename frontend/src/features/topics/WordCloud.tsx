@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { docTypeLabel } from "@/lib/labels";
 import { Card, EmptyState } from "@/components/primitives";
 
 const DOC_TYPES = [
@@ -32,21 +33,21 @@ export function WordCloud({
           onChange={(e) => onDocType(e.target.value)}
           className="rounded border border-border bg-bg px-2 py-1 text-xs"
         >
-          <option value="">all document types</option>
+          <option value="">All document types</option>
           {DOC_TYPES.map((t) => (
             <option key={t} value={t}>
-              {t.replace(/_/g, " ")}
+              {docTypeLabel(t)}
             </option>
           ))}
         </select>
         <span className="ml-auto text-xs text-muted">
-          Hindi/English/transliterated variants merged
+          English, Hindi &amp; spelling variants grouped
         </span>
       </div>
       <div className="p-4">
         {isLoading && <EmptyState>Loading…</EmptyState>}
         {data && data.items.length === 0 && (
-          <EmptyState>No terms — ingest and index some documents first.</EmptyState>
+          <EmptyState>No terms yet — add and process some documents first.</EmptyState>
         )}
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           {data?.items.map((w) => (

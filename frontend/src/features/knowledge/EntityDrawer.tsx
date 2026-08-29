@@ -1,17 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { KGNeighbor } from "@/lib/types";
+import { entityKindLabel, predicateLabel, titleCase } from "@/lib/labels";
 import { ConfidenceBar } from "@/components/primitives";
 
+// attribute keys that are plumbing, not information for a reader
+const HIDDEN_ATTR = /(_id$|^id$|^normalized_key$|^source_field)/;
+
 function AttrList({ attrs }: { attrs: Record<string, unknown> }) {
-  const entries = Object.entries(attrs).filter(([, v]) => v != null && v !== "");
+  const entries = Object.entries(attrs).filter(
+    ([k, v]) => v != null && v !== "" && !HIDDEN_ATTR.test(k),
+  );
   if (!entries.length) return null;
   return (
     <dl className="mt-2 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-xs">
       {entries.map(([k, v]) => (
         <div key={k} className="contents">
-          <dt className="text-muted">{k.replace(/_/g, " ")}</dt>
-          <dd className="font-mono">{String(v)}</dd>
+          <dt className="text-muted">{titleCase(k)}</dt>
+          <dd>{String(v)}</dd>
         </div>
       ))}
     </dl>
@@ -19,22 +25,22 @@ function AttrList({ attrs }: { attrs: Record<string, unknown> }) {
 }
 
 function NeighborRow({ n, onNavigate }: { n: KGNeighbor; onNavigate: (id: string) => void }) {
-  const arrow = n.direction === "out" ? "→" : "←";
   return (
     <li className="flex items-center justify-between gap-2 border-b border-border/60 py-1.5 text-sm last:border-0">
       <span className="min-w-0">
-        <span className="font-mono text-[11px] text-muted">
-          {arrow} {n.predicate}
-          {n.valid_from ? ` (${n.valid_from})` : ""}
+        <span className="text-[11px] text-muted">
+          {n.direction === "out" ? predicateLabel(n.predicate) : `${predicateLabel(n.predicate)} of`}
+          {n.valid_from ? ` (as of ${n.valid_from})` : ""}
         </span>
         <button
           onClick={() => onNavigate(n.entity.id)}
           className="ml-2 truncate text-left text-brand hover:underline"
         >
-          {n.entity.kind}: {n.entity.name}
+          {n.entity.name}
+          <span className="ml-1 text-[11px] text-muted">{entityKindLabel(n.entity.kind)}</span>
         </button>
       </span>
-      <ConfidenceBar value={n.entity.confidence} />
+      {n.entity.confidence > 0 && <ConfidenceBar value={n.entity.confidence} />}
     </li>
   );
 }
@@ -62,7 +68,7 @@ export function EntityDrawer({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-wide text-muted">
-              {data?.entity.kind.replace(/_/g, " ")}
+              {data ? entityKindLabel(data.entity.kind) : "…"}
             </div>
             <h2 className="truncate text-base font-semibold">{data?.entity.name ?? "…"}</h2>
           </div>
@@ -77,7 +83,7 @@ export function EntityDrawer({
         {data && (
           <>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted">
-              <ConfidenceBar value={data.entity.confidence} />
+              {data.entity.confidence > 0 && <ConfidenceBar value={data.entity.confidence} />}
               {data.entity.document_id && (
                 <a
                   className="text-brand hover:underline"
@@ -85,21 +91,21 @@ export function EntityDrawer({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  source document
+                  View source document
                 </a>
               )}
             </div>
             <AttrList attrs={data.entity.attrs} />
 
             <h3 className="mt-4 text-sm font-semibold">
-              Relations ({data.neighbors.length})
+              Connections ({data.neighbors.length})
             </h3>
             <ul className="mt-1">
               {data.neighbors.map((n) => (
                 <NeighborRow key={n.relation_id} n={n} onNavigate={onNavigate} />
               ))}
               {data.neighbors.length === 0 && (
-                <li className="py-2 text-sm text-muted">No relations.</li>
+                <li className="py-2 text-sm text-muted">Not linked to anything yet.</li>
               )}
             </ul>
           </>

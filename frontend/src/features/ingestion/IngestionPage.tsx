@@ -10,12 +10,12 @@ export function IngestionPage() {
   return (
     <div className="mx-auto min-w-0 max-w-6xl space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Ingestion &amp; Review</h1>
-        <p className="mt-1 text-sm text-muted">
-          Upload geological, mining and production documents. The pipeline classifies
-          each file, extracts structured fields with a confidence score, and routes
-          anything below the threshold here for an officer to verify before it can be
-          used in a report.
+        <h1 className="text-2xl font-semibold">Upload &amp; review</h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted">
+          Add documents below. Each one is read, classified, and its key figures pulled
+          out with a confidence score. Anything the system isn&rsquo;t sure about waits
+          in the review queue for you to confirm &mdash; nothing uncertain is used in a
+          report or an answer until you&rsquo;ve checked it.
         </p>
       </header>
 

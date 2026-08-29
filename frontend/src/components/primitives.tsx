@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { statusLabel } from "@/lib/labels";
 
 const STATUS_STYLES: Record<string, string> = {
   ready: "bg-ok/15 text-ok",
@@ -15,8 +16,11 @@ const STATUS_STYLES: Record<string, string> = {
 export function StatusPill({ status }: { status: string }) {
   const cls = STATUS_STYLES[status] ?? "bg-surface-2 text-muted";
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${cls}`}>
-      {status.replace(/_/g, " ")}
+    <span
+      className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${cls}`}
+      title={status}
+    >
+      {statusLabel(status)}
     </span>
   );
 }

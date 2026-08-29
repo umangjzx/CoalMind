@@ -39,10 +39,10 @@ export function AskPage() {
     <div className="mx-auto min-w-0 max-w-5xl space-y-5">
       <header>
         <h1 className="text-2xl font-semibold">Ask CoalMind</h1>
-        <p className="mt-1 text-sm text-muted">
-          Natural-language questions answered from the knowledge graph and document
-          corpus — every figure cited to its source. The system declines rather than
-          guesses when it isn't confident. Verified answers are cached for instant reuse.
+        <p className="mt-1 max-w-2xl text-sm text-muted">
+          Ask a question in plain English. The answer is built only from your uploaded
+          documents, with every figure linked to the page it came from. If the documents
+          don&rsquo;t clearly answer it, the system says so rather than guessing.
         </p>
       </header>
 
@@ -81,17 +81,19 @@ export function AskPage() {
         </div>
         {cache.data && cache.data.total > 0 && (
           <div className="mt-2 text-xs text-muted">
-            {cache.data.total} verified answer{cache.data.total > 1 ? "s" : ""} in cache
+            {cache.data.total} saved answer{cache.data.total > 1 ? "s" : ""} ready to reuse
           </div>
         )}
       </Card>
 
       <div ref={listRef} className="space-y-4">
         {ask.isPending && (
-          <Card className="p-4 text-sm text-muted">Retrieving evidence and composing a cited answer…</Card>
+          <Card className="p-4 text-sm text-muted">
+            Finding the evidence and writing a cited answer…
+          </Card>
         )}
         {items.length === 0 && !ask.isPending && (
-          <EmptyState>No questions yet — ask one above.</EmptyState>
+          <EmptyState>No questions yet — ask one above, or try an example.</EmptyState>
         )}
         {items.map((qa) => (
           <AnswerCard key={qa.id} qa={qa} threshold={threshold} />

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import type { ReportDetailT } from "@/lib/types";
+import { authorKindLabel, reportTemplateLabel } from "@/lib/labels";
 import { Card, StatusPill } from "@/components/primitives";
 import { BlockRenderer } from "./BlockRenderer";
 
@@ -11,10 +12,13 @@ function UnresolvedBanner({ report }: { report: ReportDetailT }) {
   if (!u.length) return null;
   return (
     <div className="rounded border border-warn/40 bg-warn/10 p-3 text-xs text-warn">
-      <b>{u.length} bound field(s) still need verification</b> — finalisation is blocked
-      until an officer confirms these in the{" "}
+      <b>
+        {u.length} figure{u.length === 1 ? "" : "s"} in this report {u.length === 1 ? "is" : "are"}{" "}
+        still unconfirmed
+      </b>{" "}
+      — you can&rsquo;t finalise until {u.length === 1 ? "it is" : "they are"} checked in{" "}
       <Link to="/ingestion" className="underline">
-        review queue
+        Upload &amp; review
       </Link>
       .
       <ul className="mt-1 list-disc pl-5">
@@ -39,12 +43,12 @@ function DiffView({ reportId, versions }: { reportId: string; versions: ReportDe
   if (versions.length < 2) return null;
   return (
     <details className="rounded border border-border p-2 text-xs">
-      <summary className="cursor-pointer font-medium">Compare versions (AI vs human)</summary>
+      <summary className="cursor-pointer font-medium">Compare versions</summary>
       <div className="mt-2 flex items-center gap-2">
         <select value={from} onChange={(e) => setFrom(Number(e.target.value))} className="rounded border border-border bg-bg px-1">
           {versions.map((v) => (
             <option key={v.id} value={v.version_no}>
-              v{v.version_no} ({v.author_kind})
+              v{v.version_no} · {authorKindLabel(v.author_kind)}
             </option>
           ))}
         </select>
@@ -52,7 +56,7 @@ function DiffView({ reportId, versions }: { reportId: string; versions: ReportDe
         <select value={to} onChange={(e) => setTo(Number(e.target.value))} className="rounded border border-border bg-bg px-1">
           {versions.map((v) => (
             <option key={v.id} value={v.version_no}>
-              v{v.version_no} ({v.author_kind})
+              v{v.version_no} · {authorKindLabel(v.author_kind)}
             </option>
           ))}
         </select>
@@ -114,8 +118,8 @@ export function ReportView({ reportId }: { reportId: string }) {
           <h2 className="truncate text-lg font-semibold">{report.title}</h2>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted">
             <StatusPill status={report.status} />
-            <span>{report.template_key.replace(/_/g, " ")}</span>
-            {v && <span>· v{v.version_no} ({v.author_kind})</span>}
+            <span>{reportTemplateLabel(report.template_key)}</span>
+            {v && <span>· v{v.version_no} · {authorKindLabel(v.author_kind)}</span>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -125,8 +129,9 @@ export function ReportView({ reportId }: { reportId: string }) {
                 onClick={() => rerender.mutate()}
                 disabled={rerender.isPending}
                 className="rounded border border-border px-2 py-1 text-xs hover:bg-surface-2"
+                title="Rebuild the draft from the latest confirmed figures"
               >
-                Re-render
+                Regenerate
               </button>
               <button
                 onClick={() => {
@@ -141,7 +146,11 @@ export function ReportView({ reportId }: { reportId: string }) {
                 onClick={() => finalize.mutate()}
                 disabled={finalize.isPending || (v?.unresolved.length ?? 0) > 0}
                 className="rounded bg-brand px-2 py-1 text-xs text-brand-fg disabled:opacity-50"
-                title={(v?.unresolved.length ?? 0) > 0 ? "resolve flagged fields first" : ""}
+                title={
+                  (v?.unresolved.length ?? 0) > 0
+                    ? "Confirm the unconfirmed figures first"
+                    : ""
+                }
               >
                 Finalise
               </button>
@@ -200,8 +209,8 @@ export function ReportView({ reportId }: { reportId: string }) {
                     {v.citations.map((c) => (
                       <li key={c.marker}>
                         [{c.marker}] {c.document_filename ?? c.document_id}
-                        {c.page_no ? `, p.${c.page_no}` : ""} — “{c.snippet}” · confidence{" "}
-                        {Math.round(c.confidence * 100)}%
+                        {c.page_no ? `, page ${c.page_no}` : ""} — &ldquo;{c.snippet}&rdquo; ·{" "}
+                        {Math.round(c.confidence * 100)}% confidence
                       </li>
                     ))}
                   </ol>

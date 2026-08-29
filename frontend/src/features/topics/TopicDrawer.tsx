@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { docTypeLabel } from "@/lib/labels";
 
 export function TopicDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { data, isLoading } = useQuery({
@@ -15,9 +16,7 @@ export function TopicDrawer({ id, onClose }: { id: string; onClose: () => void }
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-xs uppercase tracking-wide text-muted">
-              topic · {data?.engine}
-            </div>
+            <div className="text-xs uppercase tracking-wide text-muted">Theme</div>
             <h2 className="text-base font-semibold">{data?.label ?? "…"}</h2>
           </div>
           <button
@@ -42,11 +41,11 @@ export function TopicDrawer({ id, onClose }: { id: string; onClose: () => void }
               ))}
             </div>
 
-            <h3 className="mt-4 text-sm font-semibold">What's driving this</h3>
+            <h3 className="mt-4 text-sm font-semibold">What&rsquo;s driving this</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted">{data.summary}</p>
 
             <h3 className="mt-4 text-sm font-semibold">
-              Documents ({data.documents.length})
+              Where it comes up ({data.documents.length})
             </h3>
             <ul className="mt-1 space-y-1 text-sm">
               {data.documents.map((d) => (
@@ -60,8 +59,8 @@ export function TopicDrawer({ id, onClose }: { id: string; onClose: () => void }
                     {d.filename}
                   </a>
                   <span className="ml-2 text-xs text-muted">
-                    {d.doc_type?.replace(/_/g, " ")}
-                    {d.doc_date ? ` · ${d.doc_date}` : ""} · weight {d.weight.toFixed(2)}
+                    {docTypeLabel(d.doc_type)}
+                    {d.doc_date ? ` · ${d.doc_date}` : ""}
                   </span>
                 </li>
               ))}

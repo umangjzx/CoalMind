@@ -22,17 +22,16 @@ function ReviewRow({ item }: { item: ReviewQueueItem }) {
   return (
     <div className="border-b border-border/60 px-4 py-3 last:border-0">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="text-sm font-medium">
+        <div className="text-sm font-medium" title={item.field_key}>
           {item.label}
-          <span className="ml-2 font-mono text-[11px] text-muted">{item.field_key}</span>
         </div>
         <ConfidenceBar value={item.confidence} />
       </div>
 
       <div className="mt-1 text-xs text-muted">
-        {item.document_filename}
-        {item.page_no ? ` · p.${item.page_no}` : ""}
-        {item.source_kind === "ocr" ? " · OCR" : ""}
+        From <span className="text-fg">{item.document_filename}</span>
+        {item.page_no ? `, page ${item.page_no}` : ""}
+        {item.source_kind === "ocr" ? " (scanned)" : ""}
         {" · "}
         <a
           className="text-brand hover:underline"
@@ -40,7 +39,7 @@ function ReviewRow({ item }: { item: ReviewQueueItem }) {
           target="_blank"
           rel="noreferrer"
         >
-          open source
+          View in document
         </a>
       </div>
 
@@ -50,7 +49,7 @@ function ReviewRow({ item }: { item: ReviewQueueItem }) {
         </div>
       )}
       {item.review_note && (
-        <div className="mt-1 text-xs text-warn">⚠ {item.review_note}</div>
+        <div className="mt-1 text-xs text-warn">Why it needs a check: {item.review_note}</div>
       )}
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -122,13 +121,22 @@ export function ReviewQueue() {
 
   return (
     <Card>
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold">Review queue</h2>
-        <span className="text-xs text-muted">{data?.total ?? 0} fields need verification</span>
+      <div className="border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Review queue</h2>
+          <span className="text-xs text-muted">{data?.total ?? 0} waiting</span>
+        </div>
+        <p className="mt-0.5 text-xs text-muted">
+          Values the system extracted but isn&rsquo;t confident about. Confirm, correct,
+          or reject each one &mdash; it won&rsquo;t be used until you do.
+        </p>
       </div>
       {isLoading && <EmptyState>Loading…</EmptyState>}
       {data && data.items.length === 0 && (
-        <EmptyState>Nothing to review — every extracted field is above threshold or verified.</EmptyState>
+        <EmptyState>
+          Nothing to review right now. Low-confidence values appear here after you add
+          documents.
+        </EmptyState>
       )}
       {data && data.items.map((it) => <ReviewRow key={it.id} item={it} />)}
     </Card>

@@ -41,7 +41,7 @@ export function NewReportForm({ onCreated }: { onCreated: (r: ReportDetailT) => 
         }}
         className="mt-2 w-full rounded border border-border bg-bg px-2 py-1.5 text-sm"
       >
-        <option value="">Choose a template…</option>
+        <option value="">Choose a report type…</option>
         {templates?.map((t) => (
           <option key={t.key} value={t.key}>
             {t.title}
@@ -88,10 +88,12 @@ export function NewReportForm({ onCreated }: { onCreated: (r: ReportDetailT) => 
             onClick={() => create.mutate()}
             className="mt-3 w-full rounded bg-brand px-3 py-1.5 text-sm text-brand-fg disabled:opacity-50"
           >
-            {create.isPending ? "Generating…" : "Generate draft"}
+            {create.isPending ? "Drafting…" : "Draft report"}
           </button>
           {create.isError && (
-            <div className="mt-2 text-xs text-danger">{(create.error as Error).message}</div>
+            <div className="mt-2 text-xs text-danger">
+              Couldn&rsquo;t draft it: {(create.error as Error).message}
+            </div>
           )}
         </>
       )}

@@ -13,7 +13,7 @@ export function TrendsChart() {
   if (!data || data.series.length === 0)
     return (
       <Card className="p-4">
-        <EmptyState>No trend data — rebuild topics first.</EmptyState>
+        <EmptyState>No trends yet — refresh topics after adding documents.</EmptyState>
       </Card>
     );
 
@@ -25,7 +25,7 @@ export function TrendsChart() {
   return (
     <Card>
       <div className="border-b border-border px-4 py-3 text-sm font-semibold">
-        Topic trends over time
+        How often each theme comes up over time
       </div>
       <div className="space-y-3 overflow-x-auto p-4">
         {data.series.map((s) => (

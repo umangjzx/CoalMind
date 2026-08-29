@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AdminUserRow } from "@/lib/types";
+import { auditActionLabel, docTypeLabel, roleLabel, statusLabel } from "@/lib/labels";
 import { Card, EmptyState } from "@/components/primitives";
 
 const ROLES = [
@@ -21,7 +22,7 @@ function CountGrid({ title, data }: { title: string; data: Record<string, number
         {entries.length === 0 && <span className="text-sm text-muted">—</span>}
         {entries.map(([k, v]) => (
           <span key={k} className="rounded bg-surface-2 px-2 py-0.5 text-sm">
-            {k.replace(/_/g, " ")} <b className="tabular-nums">{v}</b>
+            {statusLabel(k)} <b className="tabular-nums">{v}</b>
           </span>
         ))}
       </div>
@@ -40,30 +41,33 @@ function OverviewSection() {
   if (isError)
     return (
       <Card className="p-4">
-        <EmptyState>Admin access requires a data-admin or ministry sign-in.</EmptyState>
+        <EmptyState>
+          Sign in as an IT administrator or ministry account to see this page.
+        </EmptyState>
       </Card>
     );
   if (!data) return <Card className="p-4"><EmptyState>Loading…</EmptyState></Card>;
 
   const s = data.security;
+  const yn = (b: boolean) => (b ? "Yes" : "No");
   return (
     <Card className="space-y-4 p-4">
       <h2 className="text-sm font-semibold">Platform overview</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <CountGrid title="Documents" data={data.documents_by_status} />
-        <CountGrid title="Extraction fields" data={data.fields_by_status} />
+        <CountGrid title="Extracted values" data={data.fields_by_status} />
         <CountGrid title="Reports" data={data.reports_by_status} />
-        <CountGrid title="Q&A" data={data.qa_by_status} />
+        <CountGrid title="Questions asked" data={data.qa_by_status} />
       </div>
       <div className="flex flex-wrap gap-2 text-sm">
         {[
-          ["review queue", data.review_queue],
-          ["KG entities", data.kg_entities],
-          ["KG relations", data.kg_relations],
-          ["doc chunks", data.doc_chunks],
-          ["topics", data.topics],
-          ["subsidiaries", data.subsidiaries],
-          ["users", data.users],
+          ["Awaiting review", data.review_queue],
+          ["Facts & entities", data.kg_entities],
+          ["Links", data.kg_relations],
+          ["Searchable passages", data.doc_chunks],
+          ["Themes", data.topics],
+          ["Subsidiaries", data.subsidiaries],
+          ["Users", data.users],
         ].map(([k, v]) => (
           <span key={k} className="rounded bg-surface-2 px-2 py-0.5">
             {k} <b className="tabular-nums">{v}</b>
@@ -72,38 +76,40 @@ function OverviewSection() {
       </div>
 
       <div className="rounded border border-border p-3">
-        <div className="text-xs uppercase tracking-wide text-muted">Security posture</div>
+        <div className="text-xs uppercase tracking-wide text-muted">Security &amp; data handling</div>
         <ul className="mt-1 space-y-0.5 text-sm">
           <li>
-            Auth required:{" "}
-            <b className={s.auth_required ? "text-ok" : "text-warn"}>
-              {String(s.auth_required)}
-            </b>
+            Sign-in required:{" "}
+            <b className={s.auth_required ? "text-ok" : "text-warn"}>{yn(s.auth_required)}</b>
           </li>
           <li>
-            LLM: <b>{s.llm_provider}</b> ({s.llm_is_hosted ? "hosted" : "on-prem"}) → effective{" "}
+            AI model:{" "}
+            <b>{s.llm_provider}</b> ({s.llm_is_hosted ? "hosted" : "on-premises"}) &mdash;{" "}
             <b className={s.llm_effective.startsWith("on-prem") ? "text-ok" : "text-warn"}>
-              {s.llm_effective}
+              {s.llm_effective.startsWith("on-prem") ? "runs on-premises" : "in use"}
             </b>
           </li>
           <li>
-            Third-party API allowed:{" "}
+            Sends data to a third-party AI service:{" "}
             <b className={s.allow_third_party_api ? "text-warn" : "text-ok"}>
-              {String(s.allow_third_party_api)}
+              {yn(s.allow_third_party_api)}
             </b>
           </li>
-          <li>Embeddings: <b>{s.embeddings_provider}</b> {s.embeddings_on_prem ? "(on-prem)" : ""}</li>
-          <li className="flex items-center gap-2">
-            Audit hash-chain:{" "}
+          <li>
+            Search index: <b>{s.embeddings_provider}</b>{" "}
+            {s.embeddings_on_prem ? "(on-premises)" : ""}
+          </li>
+          <li className="flex flex-wrap items-center gap-2">
+            Audit trail:{" "}
             <b className={s.audit_chain_ok ? "text-ok" : "text-danger"}>
-              {s.audit_chain_ok ? "intact" : "BROKEN"}
+              {s.audit_chain_ok ? "Intact" : "TAMPERED"}
             </b>{" "}
             ({s.audit_events} events)
             <button
               onClick={() => verify.mutate()}
               className="rounded border border-border px-2 py-0.5 text-xs hover:bg-surface-2"
             >
-              {verify.isPending ? "verifying…" : "re-verify"}
+              {verify.isPending ? "Checking…" : "Re-check"}
             </button>
             {verify.data && (
               <span className="text-xs text-muted">{verify.data.detail}</span>
@@ -150,17 +156,17 @@ function UsersSection() {
       </div>
       {show && (
         <div className="grid gap-2 border-b border-border p-3 sm:grid-cols-2">
-          <input placeholder="email" value={form.email}
+          <input placeholder="Email" value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="rounded border border-border bg-bg px-2 py-1 text-sm" />
-          <input placeholder="full name" value={form.full_name}
+          <input placeholder="Full name" value={form.full_name}
             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
             className="rounded border border-border bg-bg px-2 py-1 text-sm" />
           <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
             className="rounded border border-border bg-bg px-2 py-1 text-sm">
-            {ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
+            {ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
           </select>
-          <input placeholder="initial password" value={form.password}
+          <input placeholder="Initial password" value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             className="rounded border border-border bg-bg px-2 py-1 text-sm" />
           <button onClick={() => create.mutate()} disabled={create.isPending}
@@ -195,7 +201,7 @@ function UsersSection() {
                     onChange={(e) => patch.mutate({ id: u.id, body: { role: e.target.value } })}
                     className="rounded border border-border bg-bg px-1 py-0.5 text-xs"
                   >
-                    {ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
+                    {ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
                   </select>
                 </td>
                 <td className="px-4 py-2">
@@ -205,7 +211,7 @@ function UsersSection() {
                       u.is_active ? "bg-ok/15 text-ok" : "bg-danger/15 text-danger"
                     }`}
                   >
-                    {u.is_active ? "active" : "disabled"}
+                    {u.is_active ? "Active" : "Disabled"}
                   </button>
                 </td>
                 <td className="px-4 py-2 text-xs text-muted">
@@ -230,8 +236,10 @@ function AuditSection() {
   return (
     <Card>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold">Audit log</h2>
-        <span className="text-xs text-muted">{data?.total ?? 0} events · append-only, hash-chained</span>
+        <h2 className="text-sm font-semibold">Activity log</h2>
+        <span className="text-xs text-muted">
+          {data?.total ?? 0} events · tamper-evident, never edited or deleted
+        </span>
       </div>
       <div className="max-h-96 overflow-auto">
         <table className="w-full text-xs">
@@ -241,7 +249,7 @@ function AuditSection() {
                 <td className="px-3 py-1 tabular-nums text-muted">{e.seq}</td>
                 <td className="px-3 py-1 text-muted">{new Date(e.at).toLocaleString()}</td>
                 <td className="px-3 py-1">{e.actor}</td>
-                <td className="px-3 py-1 font-mono">{e.action}</td>
+                <td className="px-3 py-1">{auditActionLabel(e.action)}</td>
                 <td className="px-3 py-1 text-muted">
                   {e.target_type}
                   {e.target_id ? `:${e.target_id.slice(0, 8)}` : ""}
@@ -266,29 +274,30 @@ function QualitySection() {
       <h2 className="text-sm font-semibold">Extraction quality</h2>
       <div className="mt-2 flex flex-wrap gap-2 text-sm">
         <span className="rounded bg-surface-2 px-2 py-0.5">
-          fields <b>{data.total_fields}</b>
+          values extracted <b>{data.total_fields}</b>
         </span>
         <span className="rounded bg-surface-2 px-2 py-0.5">
-          auto-accept <b>{Math.round(data.auto_accept_rate * 100)}%</b>
+          accepted automatically <b>{Math.round(data.auto_accept_rate * 100)}%</b>
         </span>
         <span className="rounded bg-surface-2 px-2 py-0.5">
-          mean confidence <b>{Math.round(data.mean_confidence * 100)}%</b>
+          average confidence <b>{Math.round(data.mean_confidence * 100)}%</b>
         </span>
         <span className="rounded bg-surface-2 px-2 py-0.5">
-          OCR-sourced <b>{Math.round(data.ocr_page_ratio * 100)}%</b>
+          from scans <b>{Math.round(data.ocr_page_ratio * 100)}%</b>
         </span>
         <span className="rounded bg-surface-2 px-2 py-0.5">
-          review: {data.review_outcomes.verified ?? 0} verified · {data.review_outcomes.rejected ?? 0}{" "}
-          rejected · {data.review_outcomes.pending ?? 0} pending
+          reviewed: {data.review_outcomes.verified ?? 0} confirmed ·{" "}
+          {data.review_outcomes.rejected ?? 0} rejected ·{" "}
+          {data.review_outcomes.pending ?? 0} waiting
         </span>
       </div>
       <table className="mt-3 text-xs">
         <tbody>
           {Object.entries(data.by_doc_type).map(([t, v]) => (
             <tr key={t}>
-              <td className="py-0.5 pr-4 text-muted">{t.replace(/_/g, " ")}</td>
-              <td className="py-0.5 pr-4">{v.fields} fields</td>
-              <td className="py-0.5">{Math.round(v.mean_confidence * 100)}% mean conf.</td>
+              <td className="py-0.5 pr-4 text-muted">{docTypeLabel(t)}</td>
+              <td className="py-0.5 pr-4">{v.fields} values</td>
+              <td className="py-0.5">{Math.round(v.mean_confidence * 100)}% avg. confidence</td>
             </tr>
           ))}
         </tbody>
@@ -302,10 +311,10 @@ export function AdminPage() {
     <div className="mx-auto min-w-0 max-w-5xl space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">Admin</h1>
-        <p className="mt-1 text-sm text-muted">
-          Platform health, per-subsidiary access control, the append-only hash-chained
-          audit trail, and extraction-quality metrics. Sign in as a data-admin or
-          ministry account to see live data.
+        <p className="mt-1 max-w-2xl text-sm text-muted">
+          Platform totals, who can sign in and with what access, a complete record of
+          every action taken, and how well extraction is performing. Needs an IT
+          administrator or ministry sign-in.
         </p>
       </header>
       <OverviewSection />

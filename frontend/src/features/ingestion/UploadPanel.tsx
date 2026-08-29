@@ -13,11 +13,19 @@ export function UploadPanel() {
     mutationFn: (files: File[]) => api.uploadDocuments(files),
     onSuccess: (res: unknown) => {
       const r = res as { items: unknown[]; queued_for_processing: number };
-      setMsg(`${r.items.length} uploaded, ${r.queued_for_processing} queued for extraction`);
+      const total = r.items.length;
+      const fresh = r.queued_for_processing;
+      const dupes = total - fresh;
+      setMsg(
+        fresh === 0
+          ? `${total} file${total === 1 ? "" : "s"} already in the collection — nothing new to process.`
+          : `${fresh} file${fresh === 1 ? "" : "s"} uploaded — reading them now. They'll appear in the list below.` +
+              (dupes ? ` (${dupes} were already here.)` : ""),
+      );
       qc.invalidateQueries({ queryKey: ["documents"] });
       qc.invalidateQueries({ queryKey: ["review-queue"] });
     },
-    onError: (e: Error) => setMsg(e.message),
+    onError: (e: Error) => setMsg(`Upload failed: ${e.message}`),
   });
 
   function pick(files: FileList | null) {
@@ -26,10 +34,10 @@ export function UploadPanel() {
 
   return (
     <Card className="p-5">
-      <h2 className="text-sm font-semibold">Upload documents</h2>
+      <h2 className="text-sm font-semibold">Add documents</h2>
       <p className="mt-1 text-xs text-muted">
-        PDF, images, or scans. Each file is de-duplicated by content hash and run
-        through the extraction pipeline; low-confidence fields go to the review queue.
+        PDFs, images, or scanned pages. Duplicate files are detected automatically, so
+        it&rsquo;s safe to re-upload.
       </p>
       <div
         onDragOver={(e) => {

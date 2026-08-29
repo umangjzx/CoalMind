@@ -2,7 +2,14 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { SearchResponse } from "@/lib/types";
+import { docTypeLabel } from "@/lib/labels";
 import { Card } from "@/components/primitives";
+
+function matchWord(score: number): { text: string; cls: string } {
+  if (score >= 0.62) return { text: "Strong match", cls: "text-ok" };
+  if (score >= 0.55) return { text: "Likely match", cls: "text-warn" };
+  return { text: "Weak match", cls: "text-muted" };
+}
 
 const EXAMPLES = [
   "manganese reserve estimate revision",
@@ -24,9 +31,9 @@ export function SemanticSearch() {
 
   return (
     <Card className="p-4">
-      <h2 className="text-sm font-semibold">Semantic search</h2>
+      <h2 className="text-sm font-semibold">Search by meaning</h2>
       <p className="mt-1 text-xs text-muted">
-        Vector search over embedded document text — matches by meaning, not keywords.
+        Finds passages that match what you mean, even when they use different words.
       </p>
       <form
         className="mt-3 flex gap-2"
@@ -63,34 +70,37 @@ export function SemanticSearch() {
 
       {data && (
         <ul className="mt-3 space-y-2">
-          {data.hits.map((h) => (
-            <li key={h.chunk_id} className="rounded border border-border p-2">
-              <div className="flex items-center justify-between text-xs text-muted">
-                <span>
-                  {h.document_filename}
-                  {h.doc_type ? ` · ${h.doc_type.replace(/_/g, " ")}` : ""}
-                  {h.page_no ? ` · p.${h.page_no}` : ""}
-                </span>
-                <span className="tabular-nums">score {h.score.toFixed(3)}</span>
-              </div>
-              <p className="mt-1 line-clamp-3 text-sm">{h.text}</p>
-              <a
-                className="mt-1 inline-block text-xs text-brand hover:underline"
-                href={`${api.documentFileUrl(h.document_id)}#page=${h.page_no ?? 1}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                open source
-              </a>
-            </li>
-          ))}
+          {data.hits.map((h) => {
+            const m = matchWord(h.score);
+            return (
+              <li key={h.chunk_id} className="rounded border border-border p-2">
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span>
+                    {h.document_filename}
+                    {h.doc_type ? ` · ${docTypeLabel(h.doc_type)}` : ""}
+                    {h.page_no ? ` · page ${h.page_no}` : ""}
+                  </span>
+                  <span className={m.cls}>{m.text}</span>
+                </div>
+                <p className="mt-1 line-clamp-3 text-sm">{h.text}</p>
+                <a
+                  className="mt-1 inline-block text-xs text-brand hover:underline"
+                  href={`${api.documentFileUrl(h.document_id)}#page=${h.page_no ?? 1}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View in document
+                </a>
+              </li>
+            );
+          })}
           {data.hits.length === 0 && (
-            <li className="text-sm text-muted">No matches.</li>
+            <li className="text-sm text-muted">Nothing in the documents matches that.</li>
           )}
         </ul>
       )}
       {search.isError && (
-        <div className="mt-2 text-xs text-danger">search failed — is the embedder up?</div>
+        <div className="mt-2 text-xs text-danger">Search isn&rsquo;t available right now.</div>
       )}
     </Card>
   );

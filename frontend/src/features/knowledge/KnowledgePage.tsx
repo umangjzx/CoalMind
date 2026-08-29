@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { KGEntity } from "@/lib/types";
+import { entityKindLabel, unitLabel } from "@/lib/labels";
 import { Card, ConfidenceBar, EmptyState } from "@/components/primitives";
 import { SemanticSearch } from "./SemanticSearch";
 import { EntityDrawer } from "./EntityDrawer";
@@ -15,16 +16,18 @@ function StatsBar() {
   const { data } = useQuery({ queryKey: ["kg-stats"], queryFn: api.graphStats });
   if (!data) return null;
   return (
-    <div className="flex flex-wrap gap-4 text-sm">
-      <span><b className="tabular-nums">{data.entities}</b> entities</span>
-      <span><b className="tabular-nums">{data.relations}</b> relations</span>
-      <span><b className="tabular-nums">{data.chunks}</b> embedded chunks</span>
-      <span className="text-muted">
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <span><b className="tabular-nums">{data.entities}</b> facts &amp; entities</span>
+        <span><b className="tabular-nums">{data.relations}</b> links between them</span>
+        <span><b className="tabular-nums">{data.chunks}</b> searchable passages</span>
+      </div>
+      <div className="text-xs text-muted">
         {Object.entries(data.entities_by_kind)
           .sort((a, b) => b[1] - a[1])
-          .map(([k, n]) => `${k.replace(/_/g, " ")} ${n}`)
+          .map(([k, n]) => `${entityKindLabel(k)} ${n}`)
           .join(" · ")}
-      </span>
+      </div>
     </div>
   );
 }
@@ -48,12 +51,12 @@ export function KnowledgePage() {
   return (
     <div className="mx-auto min-w-0 max-w-6xl space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold">Knowledge Graph</h1>
-        <p className="mt-1 text-sm text-muted">
-          The domain graph built from verified extractions — mines, blocks, seams,
-          reserves and production figures, each traceable to its source document —
-          plus semantic search over the document corpus. This is what the query
-          engine (M4) will reason over.
+        <h1 className="text-2xl font-semibold">Facts &amp; entities</h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted">
+          Everything the system has pulled out of your documents, organised by what it
+          is &mdash; mines, blocks, seams, reserve and production figures &mdash; and
+          linked together. Every item traces back to the document it came from. Search
+          by meaning below, or browse the list.
         </p>
       </header>
 
@@ -65,7 +68,7 @@ export function KnowledgePage() {
 
       <Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-          <h2 className="text-sm font-semibold">Entities</h2>
+          <h2 className="text-sm font-semibold">Browse</h2>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -77,10 +80,10 @@ export function KnowledgePage() {
             onChange={(e) => setKind(e.target.value)}
             className="rounded border border-border bg-bg px-2 py-1 text-sm"
           >
-            <option value="">all kinds</option>
+            <option value="">Everything</option>
             {KIND_ORDER.map((k) => (
               <option key={k} value={k}>
-                {k.replace(/_/g, " ")}
+                {entityKindLabel(k)}
               </option>
             ))}
           </select>
@@ -90,14 +93,14 @@ export function KnowledgePage() {
         {isLoading && <EmptyState>Loading…</EmptyState>}
         {data && data.items.length === 0 && (
           <EmptyState>
-            No entities yet — ingest and verify documents, or run{" "}
-            <code>python scripts/dev.py build-kg</code>.
+            Nothing here yet — upload and review some documents first, and confirmed
+            facts will appear here.
           </EmptyState>
         )}
         {kinds.map((k) => (
           <div key={k} className="border-b border-border/60 last:border-0">
             <div className="bg-surface-2 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-              {k.replace(/_/g, " ")}
+              {entityKindLabel(k)}
             </div>
             <ul>
               {data!.items
@@ -106,22 +109,22 @@ export function KnowledgePage() {
                   <li
                     key={e.id}
                     onClick={() => setSelected(e.id)}
-                    className="flex cursor-pointer items-center justify-between px-4 py-2 text-sm hover:bg-surface-2"
+                    className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-surface-2"
                   >
                     <span className="truncate">
                       {e.name}
                       {e.attrs?.quantity != null && (
                         <span className="ml-2 text-muted">
-                          {String(e.attrs.quantity)} {String(e.attrs.unit ?? "")}
+                          {String(e.attrs.quantity)} {unitLabel(e.attrs.unit as string)}
                         </span>
                       )}
                       {e.attrs?.value != null && (
                         <span className="ml-2 text-muted">
-                          {String(e.attrs.value)} {String(e.attrs.unit ?? "")}
+                          {String(e.attrs.value)} {unitLabel(e.attrs.unit as string)}
                         </span>
                       )}
                     </span>
-                    <ConfidenceBar value={e.confidence} />
+                    {e.confidence > 0 && <ConfidenceBar value={e.confidence} />}
                   </li>
                 ))}
             </ul>

@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { QAOut, ReportCitation } from "@/lib/types";
+import { answerModeLabel } from "@/lib/labels";
 import { ConfidenceBar } from "@/components/primitives";
 
 function Cite({ n, c }: { n: number; c?: ReportCitation }) {
@@ -18,22 +19,19 @@ function Cite({ n, c }: { n: number; c?: ReportCitation }) {
         <span className="absolute left-0 top-4 z-30 block w-72 rounded border border-border bg-surface p-2 text-left text-xs shadow-lg">
           <span className="block font-medium">
             {c.document_filename ?? "source"}
-            {c.page_no ? ` · p.${c.page_no}` : ""} · {c.field_key}
+            {c.page_no ? `, page ${c.page_no}` : ""}
           </span>
           <span className="mt-1 block text-muted">…{c.snippet}…</span>
-          <span className="mt-1 block">
-            relevance {Math.round(c.confidence * 100)}%
-            {c.document_id && (
-              <a
-                className="ml-2 text-brand hover:underline"
-                href={`${api.documentFileUrl(c.document_id)}#page=${c.page_no ?? 1}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                open source
-              </a>
-            )}
-          </span>
+          {c.document_id && (
+            <a
+              className="mt-1 block text-brand hover:underline"
+              href={`${api.documentFileUrl(c.document_id)}#page=${c.page_no ?? 1}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View this page
+            </a>
+          )}
         </span>
       )}
     </span>
@@ -56,12 +54,6 @@ function renderAnswer(md: string, cites: ReportCitation[]) {
     </p>
   ));
 }
-
-const MODE_LABEL: Record<string, string> = {
-  rag: "graph-aware RAG",
-  search_only: "search-only (LLM offline)",
-  cache: "verified cache",
-};
 
 export function AnswerCard({
   qa,
@@ -88,21 +80,25 @@ export function AnswerCard({
         <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
           {insufficient ? (
             <span className="rounded bg-danger/15 px-2 py-0.5 font-medium text-danger">
-              insufficient evidence — not answered
+              Not enough in the documents to answer
             </span>
           ) : flagged ? (
             <span className="rounded bg-warn/15 px-2 py-0.5 font-medium text-warn">
-              low confidence — verify before use
+              Low confidence — check before using
             </span>
           ) : (
-            <span className="rounded bg-ok/15 px-2 py-0.5 font-medium text-ok">answered</span>
+            <span className="rounded bg-ok/15 px-2 py-0.5 font-medium text-ok">Answered</span>
           )}
           <ConfidenceBar value={qa.confidence} />
-          <span className="text-muted">· {MODE_LABEL[qa.answer_mode] ?? qa.answer_mode}</span>
+          <span className="text-muted">· {answerModeLabel(qa.answer_mode)}</span>
           {qa.status === "verified" && (
-            <span className="rounded bg-ok/15 px-2 py-0.5 text-ok">in verified cache</span>
+            <span className="rounded bg-ok/15 px-2 py-0.5 text-ok">Saved</span>
           )}
-          {qa.hit_count > 0 && <span className="text-muted">· reused {qa.hit_count}×</span>}
+          {qa.hit_count > 0 && (
+            <span className="text-muted">
+              · reused {qa.hit_count} time{qa.hit_count === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
 
         <div className={insufficient ? "text-muted" : ""}>
@@ -112,14 +108,15 @@ export function AnswerCard({
         {qa.citations.length > 0 && (
           <details className="mt-2 text-xs">
             <summary className="cursor-pointer text-muted">
-              Source chain ({qa.citations.length})
+              Sources ({qa.citations.length})
             </summary>
             <ol className="mt-1 space-y-0.5 text-muted">
               {qa.citations.map((c) => (
                 <li key={c.marker}>
                   [{c.marker}] {c.document_filename ?? c.document_id}
-                  {c.page_no ? `, p.${c.page_no}` : ""} —{" "}
-                  {c.field_key === "graph_fact" ? "graph fact" : "passage"} · “{c.snippet}”
+                  {c.page_no ? `, page ${c.page_no}` : ""} —{" "}
+                  {c.field_key === "graph_fact" ? "confirmed figure" : "document passage"} ·
+                  &ldquo;{c.snippet}&rdquo;
                 </li>
               ))}
             </ol>
@@ -127,25 +124,28 @@ export function AnswerCard({
         )}
 
         {!insufficient && qa.status !== "verified" && qa.status !== "rejected" && (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               onClick={() => verify.mutate()}
               disabled={verify.isPending}
               className="rounded border border-border px-2 py-1 text-xs hover:bg-surface-2"
             >
-              Verify → add to cache
+              Save this answer
             </button>
             <button
               onClick={() => reject.mutate()}
               disabled={reject.isPending}
               className="rounded border border-border px-2 py-1 text-xs text-danger hover:bg-surface-2"
             >
-              Reject
+              Mark incorrect
             </button>
+            <span className="text-xs text-muted">
+              Saving reuses it instantly next time the same thing is asked.
+            </span>
           </div>
         )}
         {qa.status === "rejected" && (
-          <div className="mt-2 text-xs text-danger">marked incorrect by an officer</div>
+          <div className="mt-2 text-xs text-danger">Marked incorrect by an officer.</div>
         )}
       </div>
     </div>

@@ -27,11 +27,11 @@ export function TopicsPage() {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Topics &amp; Trends</h1>
-          <p className="mt-1 text-sm text-muted">
-            Emerging themes across ingested correspondence and reports — surfaced
-            proactively so the Ministry sees brewing issues before they become a
-            parliamentary question. Terms are domain-normalised (khadan / colliery /
-            mine → one term).
+          <p className="mt-1 max-w-2xl text-sm text-muted">
+            The recurring themes across all your documents, and how often each one comes
+            up over time &mdash; so a building issue is visible before it turns into a
+            Parliament question. Terms are grouped across English, Hindi, and spelling
+            variants.
           </p>
         </div>
         <button
@@ -39,7 +39,7 @@ export function TopicsPage() {
           disabled={rebuild.isPending}
           className="rounded border border-border px-3 py-1.5 text-xs hover:bg-surface-2 disabled:opacity-50"
         >
-          {rebuild.isPending ? "Rebuilding…" : "Rebuild topics"}
+          {rebuild.isPending ? "Refreshing…" : "Refresh topics"}
         </button>
       </header>
 
@@ -48,14 +48,13 @@ export function TopicsPage() {
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <Card>
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h2 className="text-sm font-semibold">Topics</h2>
-            <span className="text-xs text-muted">
-              {topics.data?.items.length ?? 0} · {topics.data?.engine ?? "—"}
-            </span>
+            <h2 className="text-sm font-semibold">Themes</h2>
+            <span className="text-xs text-muted">{topics.data?.items.length ?? 0} found</span>
           </div>
           {topics.data && topics.data.items.length === 0 && (
             <EmptyState>
-              No topics yet — click <b>Rebuild topics</b> (needs ≥2 indexed documents).
+              No themes yet — click <b>Refresh topics</b> once at least two documents
+              have been processed.
             </EmptyState>
           )}
           <ul>
@@ -65,12 +64,14 @@ export function TopicsPage() {
                 onClick={() => setSelected(t.id)}
                 className="cursor-pointer border-b border-border/60 px-4 py-2 last:border-0 hover:bg-surface-2"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-medium">{t.label}</span>
-                  <span className="text-xs text-muted">{t.doc_count} docs</span>
+                  <span className="shrink-0 text-xs text-muted">
+                    {t.doc_count} document{t.doc_count === 1 ? "" : "s"}
+                  </span>
                 </div>
                 <div className="mt-0.5 text-xs text-muted">
-                  {t.first_seen ?? "—"}
+                  {t.first_seen ?? "date unknown"}
                   {t.last_seen && t.last_seen !== t.first_seen ? ` → ${t.last_seen}` : ""}
                 </div>
               </li>
