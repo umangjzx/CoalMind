@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AnomalyOut, AnomalySeverityT, AnomalyStatusT } from "@/lib/types";
 import { Card, EmptyState } from "@/components/primitives";
+import { Page, PageHeader } from "@/components/layout";
 
 const SEV_DOT: Record<AnomalySeverityT, string> = {
   high: "bg-danger",
@@ -212,25 +213,24 @@ export function AnomaliesPage() {
   });
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Anomalies</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted">
-            Where a figure in a newer document disagrees with what earlier documents said
-            about the same mine or block &mdash; a reserve revised between reports, parts
-            that don&rsquo;t add up to their stated total, an impossible value, or a number
-            far outside the usual range. Every row links to the documents it came from.
-          </p>
-        </div>
-        <button
-          onClick={() => scan.mutate()}
-          disabled={scan.isPending}
-          className="rounded border border-border px-3 py-1.5 text-xs hover:bg-surface-2 disabled:opacity-50"
-        >
-          {scan.isPending ? "Checking…" : "Check again"}
-        </button>
-      </header>
+    <Page>
+      <PageHeader
+        title="Anomalies"
+        actions={
+          <button
+            onClick={() => scan.mutate()}
+            disabled={scan.isPending}
+            className="rounded border border-border px-3 py-1.5 text-xs hover:bg-surface-2 disabled:opacity-50"
+          >
+            {scan.isPending ? "Checking…" : "Check again"}
+          </button>
+        }
+      >
+        Where a figure in a newer document disagrees with what earlier documents said
+        about the same mine or block &mdash; a reserve revised between reports, parts that
+        don&rsquo;t add up to their stated total, an impossible value, or a number far
+        outside the usual range. Every row links to the documents it came from.
+      </PageHeader>
 
       {scan.data && (
         <div className="rounded border border-border bg-surface-2 px-3 py-2 text-xs text-muted">
@@ -266,8 +266,17 @@ export function AnomaliesPage() {
       )}
       {list.data && list.data.items.length === 0 && (
         <EmptyState>
-          Nothing here. Once two or more documents cover the same mine or block,
-          click <b>Check again</b> to compare their figures.
+          {tab === "open" && list.data.total > 0 ? (
+            <>
+              No open anomalies — {list.data.total} {list.data.total === 1 ? "has" : "have"}{" "}
+              been reviewed. See the <b>All</b> tab.
+            </>
+          ) : (
+            <>
+              Nothing here. Once two or more documents cover the same mine or block, click{" "}
+              <b>Check again</b> to compare their figures.
+            </>
+          )}
         </EmptyState>
       )}
 
@@ -276,6 +285,6 @@ export function AnomaliesPage() {
           <AnomalyCard key={a.id} a={a} />
         ))}
       </div>
-    </div>
+    </Page>
   );
 }

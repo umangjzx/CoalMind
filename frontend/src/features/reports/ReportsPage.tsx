@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import type { ReportT } from "@/lib/types";
 import { reportTemplateLabel } from "@/lib/labels";
 import { Card, EmptyState, StatusPill } from "@/components/primitives";
+import { Page, PageHeader } from "@/components/layout";
 import { NewReportForm } from "./NewReportForm";
 import { ReportView } from "./ReportView";
 
@@ -16,16 +17,13 @@ export function ReportsPage() {
   });
 
   return (
-    <div className="mx-auto min-w-0 max-w-6xl space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Report Builder</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted">
-          Choose a report type, fill in a few details, and the system drafts it from the
-          facts already extracted from your documents. Every figure is footnoted to its
-          source page. A report can&rsquo;t be finalised while any figure it uses is still
-          unconfirmed, and each edit is kept as its own version.
-        </p>
-      </header>
+    <Page>
+      <PageHeader title="Report Builder">
+        Choose a report type, fill in a few details, and the system drafts it from the
+        facts already extracted from your documents. Every figure is footnoted to its
+        source page. A report can&rsquo;t be finalised while any figure it uses is still
+        unconfirmed, and each edit is kept as its own version.
+      </PageHeader>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-[20rem,1fr]">
         <div className="space-y-4">
@@ -68,6 +66,6 @@ export function ReportsPage() {
           )}
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

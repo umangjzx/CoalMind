@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { DEPENDENCY_LABELS, docTypeLabel, healthWord, statusLabel } from "@/lib/labels";
 import { BarList, Donut, Panel } from "@/components/charts";
+import { Page, PageHeader } from "@/components/layout";
 import { PipelineFlow } from "./PipelineFlow";
 
 function sum(rec: Record<string, number> | undefined): number {
@@ -38,13 +39,10 @@ export function DashboardPage() {
   const trusted = (fs.verified ?? 0) + (fs.auto_accepted ?? 0);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted">
-          The state of the document collection, and anything that needs a person.
-        </p>
-      </header>
+    <Page>
+      <PageHeader title="Dashboard">
+        The state of the document collection, and anything that needs a person.
+      </PageHeader>
 
       <PipelineFlow o={o} />
 
@@ -203,6 +201,6 @@ export function DashboardPage() {
           )}
         </Panel>
       </div>
-    </div>
+    </Page>
   );
 }

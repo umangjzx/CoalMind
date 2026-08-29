@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { TopicOut } from "@/lib/types";
 import { Card, EmptyState } from "@/components/primitives";
+import { Page, PageHeader } from "@/components/layout";
 import { WordCloud } from "./WordCloud";
 import { TrendsChart } from "./TrendsChart";
 import { TopicDrawer } from "./TopicDrawer";
@@ -23,25 +24,23 @@ export function TopicsPage() {
   });
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Topics &amp; Trends</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted">
-            The recurring themes across all your documents, and how often each one comes
-            up over time &mdash; so a building issue is visible before it turns into a
-            Parliament question. Terms are grouped across English, Hindi, and spelling
-            variants.
-          </p>
-        </div>
-        <button
-          onClick={() => rebuild.mutate()}
-          disabled={rebuild.isPending}
-          className="rounded border border-border px-3 py-1.5 text-xs hover:bg-surface-2 disabled:opacity-50"
-        >
-          {rebuild.isPending ? "Refreshing…" : "Refresh topics"}
-        </button>
-      </header>
+    <Page>
+      <PageHeader
+        title="Topics & Trends"
+        actions={
+          <button
+            onClick={() => rebuild.mutate()}
+            disabled={rebuild.isPending}
+            className="rounded border border-border px-3 py-1.5 text-xs hover:bg-surface-2 disabled:opacity-50"
+          >
+            {rebuild.isPending ? "Refreshing…" : "Refresh topics"}
+          </button>
+        }
+      >
+        The recurring themes across all your documents, and how often each one comes up
+        over time &mdash; so a building issue is visible before it turns into a Parliament
+        question. Terms are grouped across English, Hindi, and spelling variants.
+      </PageHeader>
 
       <WordCloud docType={docType} onDocType={setDocType} />
 
@@ -83,6 +82,6 @@ export function TopicsPage() {
       </div>
 
       {selected && <TopicDrawer id={selected} onClose={() => setSelected(null)} />}
-    </div>
+    </Page>
   );
 }

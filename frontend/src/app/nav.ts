@@ -16,5 +16,6 @@ export const NAV: NavItem[] = [
   { to: "/query", label: "Ask CoalMind", blurb: "Natural-language questions with source chains", milestone: "M4", built: true },
   { to: "/topics", label: "Topics & Trends", blurb: "Word cloud and topic trends over time", milestone: "M5", built: true },
   { to: "/anomalies", label: "Anomalies", blurb: "Historical-vs-new inconsistencies flagged for review", milestone: "M7", built: true },
+  { to: "/validation", label: "Validation", blurb: "How accuracy and speed were measured", milestone: "M7", built: true },
   { to: "/admin", label: "Admin", blurb: "RBAC, audit log, ingestion monitoring", milestone: "M6", built: true },
 ];

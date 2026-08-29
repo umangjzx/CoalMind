@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AskResponse, QAOut } from "@/lib/types";
 import { Card, EmptyState } from "@/components/primitives";
+import { Page, PageHeader } from "@/components/layout";
 import { AnswerCard } from "./AnswerCard";
 
 const EXAMPLES = [
@@ -36,17 +37,14 @@ export function AskPage() {
   const items: QAOut[] = history.data?.items ?? [];
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold">Ask CoalMind</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted">
-          Ask a question in plain English. The answer is built only from your uploaded
-          documents, with every figure linked to the page it came from. If the documents
-          don&rsquo;t clearly answer it, the system says so rather than guessing.
-        </p>
-      </header>
+    <Page>
+      <PageHeader title="Ask CoalMind">
+        Ask a question in plain English. The answer is built only from your uploaded
+        documents, with every figure linked to the page it came from. If the documents
+        don&rsquo;t clearly answer it, the system says so rather than guessing.
+      </PageHeader>
 
-      <Card className="p-4">
+      <Card className="mx-auto max-w-4xl p-4">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -86,7 +84,7 @@ export function AskPage() {
         )}
       </Card>
 
-      <div ref={listRef} className="space-y-4">
+      <div ref={listRef} className="mx-auto max-w-4xl space-y-4">
         {ask.isPending && (
           <Card className="p-4 text-sm text-muted">
             Finding the evidence and writing a cited answer…
@@ -99,6 +97,6 @@ export function AskPage() {
           <AnswerCard key={qa.id} qa={qa} threshold={threshold} />
         ))}
       </div>
-    </div>
+    </Page>
   );
 }

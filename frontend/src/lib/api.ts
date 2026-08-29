@@ -33,6 +33,7 @@ import type {
   ReviewResult,
   SearchResponse,
   SubgraphResponse,
+  ValidationSummary,
   VersionResponse,
 } from "./types";
 
@@ -70,6 +71,7 @@ const get = <T>(path: string) => req<T>(path);
 export const api = {
   health: () => get<HealthResponse>("/health"),
   version: () => get<VersionResponse>("/version"),
+  validation: () => get<ValidationSummary>("/validation/summary"),
 
   // --- M6: auth + admin ---
   login: (email: string, password: string) =>

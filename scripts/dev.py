@@ -65,6 +65,7 @@ TASKS = {
     "audit-rehash": lambda: uv("python", "-c",
                                "from app.core.db import SessionLocal; from app.audit import "
                                "rehash_chain as r; d=SessionLocal(); print(r(d)); d.close()"),
+    "reset-demo": lambda: uv("python", str(ROOT / "scripts" / "reset_demo.py")),
     "test": lambda: uv("pytest", "-q"),
     "lint": lambda: (uv("ruff", "check", ".") or run(["npm", "run", "lint"], cwd=FRONTEND)),
 }

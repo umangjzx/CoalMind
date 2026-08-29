@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { KGEntity } from "@/lib/types";
 import { entityKindLabel, unitLabel } from "@/lib/labels";
-import { Card, ConfidenceBar, EmptyState } from "@/components/primitives";
+import { KIND_COLOR } from "@/components/charts";
+import { Page, PageHeader } from "@/components/layout";
+import { Card, EmptyState } from "@/components/primitives";
 import { GraphView } from "./GraphView";
 import { SemanticSearch } from "./SemanticSearch";
 import { EntityDrawer } from "./EntityDrawer";
@@ -12,24 +14,50 @@ const KIND_ORDER = [
   "subsidiary", "mine", "block", "seam", "mineral",
   "reserve", "production_figure", "finding", "inquiry", "report", "officer",
 ];
+const kindColor = (k: string) => KIND_COLOR[Math.max(0, KIND_ORDER.indexOf(k)) % KIND_COLOR.length];
 
 function StatsBar() {
   const { data } = useQuery({ queryKey: ["kg-stats"], queryFn: api.graphStats });
   if (!data) return null;
   return (
-    <div className="space-y-1.5">
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        <span><b className="tabular-nums">{data.entities}</b> facts &amp; entities</span>
-        <span><b className="tabular-nums">{data.relations}</b> links between them</span>
-        <span><b className="tabular-nums">{data.chunks}</b> searchable passages</span>
-      </div>
-      <div className="text-xs text-muted">
-        {Object.entries(data.entities_by_kind)
-          .sort((a, b) => b[1] - a[1])
-          .map(([k, n]) => `${entityKindLabel(k)} ${n}`)
-          .join(" · ")}
-      </div>
+    <div className="grid gap-3 sm:grid-cols-3">
+      {[
+        ["Facts & entities", data.entities],
+        ["Links between them", data.relations],
+        ["Searchable passages", data.chunks],
+      ].map(([label, n]) => (
+        <div key={label as string} className="rounded-lg border border-border bg-surface px-4 py-3">
+          <div className="text-xl font-semibold tabular-nums">{n as number}</div>
+          <div className="text-xs text-muted">{label as string}</div>
+        </div>
+      ))}
     </div>
+  );
+}
+
+function EntityCard({ e, onClick }: { e: KGEntity; onClick: () => void }) {
+  const q = e.attrs?.quantity ?? e.attrs?.value;
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm transition-colors hover:border-brand"
+    >
+      <span
+        className="h-2 w-2 shrink-0 rounded-full"
+        style={{ background: kindColor(e.kind) }}
+      />
+      <span className="min-w-0 flex-1 truncate">{e.name}</span>
+      {q != null && (
+        <span className="shrink-0 tabular-nums text-muted">
+          {String(q)} {unitLabel(e.attrs?.unit as string)}
+        </span>
+      )}
+      {e.confidence > 0 && (
+        <span className="shrink-0 tabular-nums text-xs text-muted">
+          {Math.round(e.confidence * 100)}%
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -50,23 +78,15 @@ export function KnowledgePage() {
     : [];
 
   return (
-    <div className="mx-auto min-w-0 max-w-6xl space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Facts &amp; entities</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted">
-          Everything the system has pulled out of your documents, organised by what it
-          is &mdash; mines, blocks, seams, reserve and production figures &mdash; and
-          linked together. Every item traces back to the document it came from. Search
-          by meaning below, or browse the list.
-        </p>
-      </header>
+    <Page>
+      <PageHeader title="Facts & entities">
+        Everything the system has pulled out of your documents, organised by what it is
+        &mdash; mines, blocks, seams, reserve and production figures &mdash; and linked
+        together. Every item traces back to the document it came from.
+      </PageHeader>
 
-      <Card className="p-4">
-        <StatsBar />
-      </Card>
-
+      <StatsBar />
       <GraphView onSelect={setSelected} />
-
       <SemanticSearch />
 
       <Card>
@@ -96,46 +116,34 @@ export function KnowledgePage() {
         {isLoading && <EmptyState>Loading…</EmptyState>}
         {data && data.items.length === 0 && (
           <EmptyState>
-            Nothing here yet — upload and review some documents first, and confirmed
-            facts will appear here.
+            Nothing here yet — upload and review some documents first, and confirmed facts
+            will appear here.
           </EmptyState>
         )}
-        {kinds.map((k) => (
-          <div key={k} className="border-b border-border/60 last:border-0">
-            <div className="bg-surface-2 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-              {entityKindLabel(k)}
+        <div className="space-y-4 p-4">
+          {kinds.map((k) => (
+            <div key={k}>
+              <div className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
+                <span className="h-2 w-2 rounded-full" style={{ background: kindColor(k) }} />
+                {entityKindLabel(k)}
+                <span className="text-border">·</span>
+                {data!.items.filter((e) => e.kind === k).length}
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {data!.items
+                  .filter((e) => e.kind === k)
+                  .map((e) => (
+                    <EntityCard key={e.id} e={e} onClick={() => setSelected(e.id)} />
+                  ))}
+              </div>
             </div>
-            <ul>
-              {data!.items
-                .filter((e) => e.kind === k)
-                .map((e: KGEntity) => (
-                  <li
-                    key={e.id}
-                    onClick={() => setSelected(e.id)}
-                    className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-surface-2"
-                  >
-                    <span className="truncate">
-                      {e.name}
-                      {e.attrs?.quantity != null && (
-                        <span className="ml-2 text-muted">
-                          {String(e.attrs.quantity)} {unitLabel(e.attrs.unit as string)}
-                        </span>
-                      )}
-                      {e.attrs?.value != null && (
-                        <span className="ml-2 text-muted">
-                          {String(e.attrs.value)} {unitLabel(e.attrs.unit as string)}
-                        </span>
-                      )}
-                    </span>
-                    {e.confidence > 0 && <ConfidenceBar value={e.confidence} />}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))}
+          ))}
+        </div>
       </Card>
 
-      {selected && <EntityDrawer id={selected} onClose={() => setSelected(null)} onNavigate={setSelected} />}
-    </div>
+      {selected && (
+        <EntityDrawer id={selected} onClose={() => setSelected(null)} onNavigate={setSelected} />
+      )}
+    </Page>
   );
 }

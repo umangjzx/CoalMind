@@ -524,3 +524,58 @@ export interface AnomalyScanResponse {
   auto_resolved: number;
   by_kind: Record<string, number>;
 }
+
+// --- Validation (accuracy + performance) ---
+
+export interface EvalBucket {
+  docs: number;
+  gt_fields_total: number;
+  gt_fields_in_scope: number;
+  coverage: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  effective_accuracy: number;
+  silent_errors: number;
+  silent_misses: number;
+  classification_correct: number;
+  auto_accept_correct: number;
+  flagged_for_review: number;
+}
+
+export interface EvalReport {
+  threshold: number;
+  overall: EvalBucket;
+  digital: EvalBucket;
+  degraded: EvalBucket | null;
+  classification_accuracy: number;
+  language_accuracy: number;
+  documents: {
+    name: string;
+    bucket: string;
+    doc_type: { truth: string; pred: string; ok: boolean };
+    fields: { key: string; in_scope: boolean; extracted: boolean; correct: boolean; detail: string }[];
+  }[];
+}
+
+export interface PerfRow {
+  path: string;
+  p50_ms: number;
+  p95_ms: number;
+  target_ms: number;
+  prd: boolean;
+}
+
+export interface ValidationSummary {
+  extraction: EvalReport | Record<string, never>;
+  performance: PerfRow[];
+  load: {
+    concurrency: number;
+    query_p95_ms: number;
+    query_rps: number;
+    health_p95_ms: number;
+    errors: number;
+  } | null;
+  tests: { backend: number; frontend_build: boolean; notes: string };
+  methodology: string[];
+}

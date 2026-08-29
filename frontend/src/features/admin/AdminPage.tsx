@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import type { AdminUserRow } from "@/lib/types";
 import { auditActionLabel, docTypeLabel, roleLabel, statusLabel } from "@/lib/labels";
 import { Card, EmptyState } from "@/components/primitives";
+import { Page, PageHeader } from "@/components/layout";
 
 const ROLES = [
   "reporting_officer",
@@ -308,21 +309,18 @@ function QualitySection() {
 
 export function AdminPage() {
   return (
-    <div className="mx-auto min-w-0 max-w-5xl space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Admin</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted">
-          Platform totals, who can sign in and with what access, a complete record of
-          every action taken, and how well extraction is performing. Needs an IT
-          administrator or ministry sign-in.
-        </p>
-      </header>
+    <Page>
+      <PageHeader title="Admin">
+        Platform totals, who can sign in and with what access, a complete record of every
+        action taken, and how well extraction is performing. Needs an IT administrator or
+        ministry sign-in.
+      </PageHeader>
       <OverviewSection />
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <UsersSection />
         <QualitySection />
       </div>
       <AuditSection />
-    </div>
+    </Page>
   );
 }
