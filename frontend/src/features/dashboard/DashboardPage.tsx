@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { DEPENDENCY_LABELS, docTypeLabel, healthWord, statusLabel } from "@/lib/labels";
-import { BarList, Donut, Panel } from "@/components/charts";
+import { BarList, Donut, Panel, RadialProgress } from "@/components/charts";
 import { Col, Grid, Kpi, KpiRow, Page, PageHeader } from "@/components/layout";
 import { PipelineFlow } from "./PipelineFlow";
 
@@ -10,14 +10,234 @@ function sum(rec: Record<string, number> | undefined): number {
   return Object.values(rec ?? {}).reduce((a, b) => a + b, 0);
 }
 
-export function DashboardPage() {
+/* ── System health panel ─────────────────────────────────────────────── */
+function SystemHealth() {
   const health = useQuery({ queryKey: ["health"], queryFn: api.health });
   const version = useQuery({ queryKey: ["version"], queryFn: api.version });
-  const overview = useQuery({ queryKey: ["admin-overview"], queryFn: api.adminOverview });
+
+  const checks = Object.entries(health.data?.checks ?? {});
+  const allOk = checks.length > 0 && checks.every(([, v]) => v === "ok");
+
+  return (
+    <Panel
+      title="System status"
+      hint={allOk ? "All services operational" : "Some services need attention"}
+      className="h-full"
+      right={
+        <span className={`pill ${allOk ? "bg-ok-lt text-ok" : "bg-warn-lt text-warn"}`}>
+          {allOk ? "● Healthy" : "⚠ Degraded"}
+        </span>
+      }
+    >
+      {health.isLoading && (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="shimmer h-6 rounded" />
+          ))}
+        </div>
+      )}
+      {health.isError && (
+        <p className="text-[12px] text-danger">Can't reach the backend.</p>
+      )}
+      <ul className="space-y-2">
+        {checks.map(([k, v]) => (
+          <li key={k} className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2 text-[12.5px]">
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  v === "ok" ? "bg-ok" : v === "down" ? "bg-danger" : "bg-warn"
+                }`}
+              />
+              {DEPENDENCY_LABELS[k] ?? k}
+            </span>
+            <span className={`text-[11px] font-medium ${v === "ok" ? "text-ok" : v === "down" ? "text-danger" : "text-warn"}`}>
+              {healthWord(v)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {version.data && (
+        <div className="mt-3 border-t border-border pt-3 text-[11px] text-muted space-y-0.5">
+          <div>
+            {version.data.allow_third_party_api
+              ? `AI: ${version.data.llm_provider} (hosted)`
+              : "Runs fully on-premises"}
+          </div>
+          <div className="font-mono text-faint">v{version.data.version}</div>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+/* ── Attention items ─────────────────────────────────────────────────── */
+function AttentionCard({
+  to,
+  title,
+  count,
+  tone,
+  description,
+  items,
+}: {
+  to: string;
+  title: string;
+  count: number | string;
+  tone: "warn" | "danger";
+  description: string;
+  items?: { label: string; severity?: string }[];
+}) {
+  const colors = {
+    warn: {
+      ring: "border-warn/30 hover:border-warn",
+      num: "text-warn",
+      bg: "bg-warn-lt/50",
+    },
+    danger: {
+      ring: "border-danger/30 hover:border-danger",
+      num: "text-danger",
+      bg: "bg-danger-lt/50",
+    },
+  }[tone];
+
+  return (
+    <Link
+      to={to}
+      className={`cm-card block p-4 transition-all duration-150 hover:shadow-sm ${colors.ring}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-semibold">{title}</div>
+          <p className="mt-0.5 text-[11.5px] text-muted">{description}</p>
+        </div>
+        <span className={`metric-xl tabular-nums shrink-0 ${colors.num}`}>{count}</span>
+      </div>
+      {items && items.length > 0 && (
+        <ul className="mt-3 space-y-1.5 border-t border-border/50 pt-2.5">
+          {items.slice(0, 4).map((it, i) => (
+            <li key={i} className="flex items-start gap-2 text-[12px]">
+              <span
+                className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
+                  it.severity === "high"
+                    ? "bg-danger"
+                    : it.severity === "medium"
+                      ? "bg-warn"
+                      : "bg-muted"
+                }`}
+              />
+              <span className="truncate text-muted">{it.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-3 text-[11px] font-medium text-brand">Review →</div>
+    </Link>
+  );
+}
+
+/* ── Document collection breakdown ──────────────────────────────────── */
+function CollectionBreakdown({ o }: { o: ReturnType<typeof useQuery<any>>["data"] }) {
+  const byStatus = o?.documents_by_status ?? {};
+  const total = sum(byStatus);
+  const ready = (byStatus.ready ?? 0) + (byStatus.verified ?? 0) + (byStatus.auto_accepted ?? 0);
+  const pctReady = total > 0 ? ready / total : 0;
+
+  return (
+    <Panel
+      title="Collection"
+      hint={`${total} document${total === 1 ? "" : "s"} by processing state`}
+      className="h-full"
+      right={
+        <RadialProgress value={pctReady} size={48} strokeWidth={7} label="ready" />
+      }
+    >
+      <BarList
+        data={Object.entries(byStatus)
+          .sort((a, b) => (b[1] as number) - (a[1] as number))
+          .map(([k, v]) => ({ label: statusLabel(k), value: v as number }))}
+      />
+    </Panel>
+  );
+}
+
+/* ── Confidence quality panel ────────────────────────────────────────── */
+function ConfidencePanel() {
   const quality = useQuery({
     queryKey: ["admin-quality"],
     queryFn: api.adminExtractionQuality,
   });
+
+  return (
+    <Panel
+      title="Extraction quality"
+      hint="average confidence by document type"
+      className="h-full"
+    >
+      {quality.data ? (
+        <BarList
+          max={1}
+          format={(v) => `${Math.round(v * 100)}%`}
+          data={Object.entries(quality.data.by_doc_type)
+            .sort((a, b) => b[1].mean_confidence - a[1].mean_confidence)
+            .map(([t, v]) => ({
+              label: docTypeLabel(t),
+              value: v.mean_confidence,
+              color:
+                v.mean_confidence >= 0.75
+                  ? "rgb(var(--c-ok))"
+                  : v.mean_confidence >= 0.6
+                    ? "rgb(var(--c-warn))"
+                    : "rgb(var(--c-danger))",
+            }))}
+        />
+      ) : (
+        <p className="text-[12px] text-muted">No extraction data yet.</p>
+      )}
+    </Panel>
+  );
+}
+
+/* ── Fields status donut ─────────────────────────────────────────────── */
+function FieldsDonut({
+  fs,
+  fieldsTotal,
+  trusted,
+  docCount,
+}: {
+  fs: Record<string, number>;
+  fieldsTotal: number;
+  trusted: number;
+  docCount: number;
+}) {
+  const segments = [
+    { label: "Confirmed by a person", value: fs.verified ?? 0, color: "rgb(var(--k-6))" },
+    { label: "Accepted automatically", value: fs.auto_accepted ?? 0, color: "rgb(var(--k-1))" },
+    { label: "Waiting for review", value: fs.needs_review ?? 0, color: "rgb(var(--c-warn))" },
+    { label: "Rejected", value: fs.rejected ?? 0, color: "rgb(var(--c-danger))" },
+  ].filter((s) => s.value > 0);
+
+  return (
+    <Panel
+      title="Extracted values"
+      hint={`${fieldsTotal} values from ${docCount} document${docCount === 1 ? "" : "s"}`}
+      className="h-full"
+    >
+      {segments.length > 0 ? (
+        <Donut
+          segments={segments}
+          centerValue={`${fieldsTotal ? Math.round((trusted / fieldsTotal) * 100) : 0}%`}
+          centerLabel="cleared"
+          size={120}
+        />
+      ) : (
+        <p className="text-[12px] text-muted">No values extracted yet.</p>
+      )}
+    </Panel>
+  );
+}
+
+/* ── Main component ──────────────────────────────────────────────────── */
+export function DashboardPage() {
+  const overview = useQuery({ queryKey: ["admin-overview"], queryFn: api.adminOverview });
   const anomalies = useQuery({
     queryKey: ["anomalies", "open"],
     queryFn: () => api.anomalies({ status: "open", limit: 6 }),
@@ -29,200 +249,176 @@ export function DashboardPage() {
   const allClear = !overview.isLoading && reviewCount === 0 && openAnomalies === 0;
 
   const fs = o?.fields_by_status ?? {};
-  const reviewSegments = [
-    { label: "Confirmed by a person", value: fs.verified ?? 0, color: "rgb(var(--k-6))" },
-    { label: "Accepted automatically", value: fs.auto_accepted ?? 0, color: "rgb(var(--k-1))" },
-    { label: "Waiting for review", value: fs.needs_review ?? 0, color: "rgb(var(--c-warn))" },
-    { label: "Rejected", value: fs.rejected ?? 0, color: "rgb(var(--c-danger))" },
-  ].filter((s) => s.value > 0);
   const fieldsTotal = sum(fs);
   const trusted = (fs.verified ?? 0) + (fs.auto_accepted ?? 0);
+  const docCount = sum(o?.documents_by_status);
+  const highSeverity = anomalies.data?.items.filter((a) => a.severity === "high").length ?? 0;
 
   return (
     <Page>
       <PageHeader title="Dashboard">
-        The state of the document collection, and anything that needs a person.
+        The state of the document collection, and anything that needs your attention.
       </PageHeader>
 
-      <PipelineFlow o={o} />
-
+      {/* ── KPI row ──────────────────────────────────────────────── */}
       <KpiRow>
-        <Kpi label="Documents" value={sum(o?.documents_by_status) || "—"} />
-        <Kpi label="Values extracted" value={fieldsTotal || "—"} />
-        <Kpi label="To review" value={reviewCount} tone={reviewCount ? "warn" : "ok"} />
+        <Kpi
+          label="Documents"
+          value={docCount || "—"}
+          sub={`${o?.documents_by_status?.processing ?? 0} processing`}
+          icon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+          }
+        />
+        <Kpi
+          label="Values extracted"
+          value={fieldsTotal || "—"}
+          sub={`${fs.needs_review ?? 0} waiting review`}
+          tone={fieldsTotal > 0 ? "brand" : "fg"}
+        />
+        <Kpi
+          label="To review"
+          value={reviewCount}
+          tone={reviewCount > 0 ? "warn" : "ok"}
+          sub={reviewCount > 0 ? "needs attention" : "all clear"}
+          onClick={() => {}}
+        />
         <Kpi
           label="Open anomalies"
           value={anomalies.data ? openAnomalies : "—"}
-          tone={openAnomalies ? "danger" : "ok"}
+          tone={openAnomalies > 0 ? "danger" : "ok"}
+          sub={highSeverity > 0 ? `${highSeverity} high severity` : "none critical"}
         />
-        <Kpi label="Reports" value={sum(o?.reports_by_status) || 0} />
-        <Kpi label="Saved answers" value={o?.qa_by_status?.verified ?? 0} tone="ok" />
+        <Kpi
+          label="Reports"
+          value={sum(o?.reports_by_status) || 0}
+          sub={`${o?.reports_by_status?.final ?? 0} finalised`}
+          tone="fg"
+        />
+        <Kpi
+          label="Saved answers"
+          value={o?.qa_by_status?.verified ?? 0}
+          tone="ok"
+          sub="reused instantly"
+        />
       </KpiRow>
 
+      {/* ── Pipeline ─────────────────────────────────────────────── */}
+      <PipelineFlow o={o} />
+
+      {/* ── Three-column analysis row ─────────────────────────────── */}
       <Grid>
         <Col span={5}>
-          <Panel
-            title="Where the values stand"
-            hint={`${fieldsTotal} values from ${sum(o?.documents_by_status)} documents`}
-            className="h-full"
-          >
-            {reviewSegments.length > 0 ? (
-              <Donut
-                segments={reviewSegments}
-                centerValue={`${fieldsTotal ? Math.round((trusted / fieldsTotal) * 100) : 0}%`}
-                centerLabel="cleared"
-              />
-            ) : (
-              <p className="text-xs text-muted">No values extracted yet.</p>
-            )}
-          </Panel>
+          <FieldsDonut fs={fs} fieldsTotal={fieldsTotal} trusted={trusted} docCount={docCount} />
         </Col>
         <Col span={4}>
-          <Panel
-            title="Confidence by document type"
-            hint="lower types need more review"
-            className="h-full"
-          >
-            {quality.data ? (
-              <BarList
-                max={1}
-                format={(v) => `${Math.round(v * 100)}%`}
-                data={Object.entries(quality.data.by_doc_type)
-                  .sort((a, b) => b[1].mean_confidence - a[1].mean_confidence)
-                  .map(([t, v]) => ({
-                    label: docTypeLabel(t),
-                    value: v.mean_confidence,
-                    color:
-                      v.mean_confidence >= 0.75
-                        ? "rgb(var(--c-ok))"
-                        : v.mean_confidence >= 0.6
-                          ? "rgb(var(--c-warn))"
-                          : "rgb(var(--c-danger))",
-                  }))}
-              />
-            ) : (
-              <p className="text-xs text-muted">No extraction data yet.</p>
-            )}
-          </Panel>
+          <ConfidencePanel />
         </Col>
         <Col span={3}>
-          <Panel title="System status" className="h-full text-sm">
-            <ul className="space-y-2">
-              {Object.entries(health.data?.checks ?? {}).map(([k, v]) => (
-                <li key={k} className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        v === "ok" ? "bg-ok" : v === "down" ? "bg-danger" : "bg-warn"
-                      }`}
-                    />
-                    {DEPENDENCY_LABELS[k] ?? k}
-                  </span>
-                  <span className="text-xs text-muted">{healthWord(v)}</span>
-                </li>
-              ))}
-              {health.isLoading && <li className="text-xs text-muted">Checking…</li>}
-              {health.isError && (
-                <li className="text-xs text-danger">Can&rsquo;t reach the backend.</li>
-              )}
-            </ul>
-            {version.data && (
-              <p className="mt-3 border-t border-border pt-3 text-xs text-muted">
-                {version.data.allow_third_party_api
-                  ? `Answers may use a hosted AI model (${version.data.llm_provider}).`
-                  : "Runs fully on-premises."}{" "}
-                v{version.data.version}
-              </p>
-            )}
-          </Panel>
+          <SystemHealth />
         </Col>
       </Grid>
 
+      {/* ── Attention + collection row ───────────────────────────── */}
       <Grid>
-        <Col span={8} className="space-y-3">
-          <h2 className="text-sm font-semibold">Needs your attention</h2>
-          {allClear ? (
-            <div className="rounded-xl border border-border bg-surface p-6 text-sm text-muted">
-              You&rsquo;re all caught up — nothing is waiting for review.
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Link
-                to="/ingestion"
-                className="rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand"
-              >
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm font-medium">Values to review</span>
-                <span className="text-3xl font-semibold tabular-nums text-warn">
-                  {reviewCount}
-                </span>
+        <Col span={8}>
+          <div className="space-y-3">
+            <h2 className="text-[12px] font-semibold uppercase tracking-widest text-muted">
+              Needs attention
+            </h2>
+            {allClear ? (
+              <div className="cm-card p-6 text-center">
+                <div className="text-[28px] mb-2">✓</div>
+                <div className="text-[13px] font-medium text-ok">You're all caught up</div>
+                <div className="text-[12px] text-muted mt-1">Nothing is waiting for review.</div>
               </div>
-              {fieldsTotal > 0 && (
-                <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface-2">
-                  <span
-                    className="block h-full rounded-full bg-ok"
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {reviewCount > 0 && (
+                  <AttentionCard
+                    to="/ingestion"
+                    title="Values to review"
+                    count={reviewCount}
+                    tone="warn"
+                    description={
+                      fieldsTotal > 0
+                        ? `${Math.round((trusted / fieldsTotal) * 100)}% of extracted values are cleared. Low-confidence ones need a human check.`
+                        : "Low-confidence values land here for a person to confirm, correct, or reject."
+                    }
+                  />
+                )}
+                {openAnomalies > 0 && (
+                  <AttentionCard
+                    to="/anomalies"
+                    title="Open anomalies"
+                    count={openAnomalies}
+                    tone="danger"
+                    description="Figures in newer documents that disagree with earlier records for the same mine or block."
+                    items={anomalies.data?.items.slice(0, 4).map((a) => ({
+                      label: a.title,
+                      severity: a.severity,
+                    }))}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Clearance progress bar */}
+            {fieldsTotal > 0 && (
+              <div className="cm-card p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[12px] font-medium">Clearance progress</span>
+                  <span className="text-[12px] font-semibold text-ok">
+                    {Math.round((trusted / fieldsTotal) * 100)}%
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-full rounded-full bg-ok transition-[width] duration-700"
                     style={{ width: `${Math.round((trusted / fieldsTotal) * 100)}%` }}
                   />
-                </span>
-              )}
-              <p className="mt-2 text-xs text-muted">
-                {fieldsTotal > 0
-                  ? `${Math.round((trusted / fieldsTotal) * 100)}% of extracted values are cleared. The rest are low-confidence — confirm, correct, or reject them.`
-                  : "Low-confidence values land here for a person to check."}
-              </p>
-            </Link>
-
-            <Link
-              to="/anomalies"
-              className="rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand"
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm font-medium">Open anomalies</span>
-                <span className="text-3xl font-semibold tabular-nums">
-                  {anomalies.data ? openAnomalies : "—"}
-                </span>
+                </div>
+                <div className="mt-1.5 flex justify-between text-[10.5px] text-faint">
+                  <span>{trusted} cleared</span>
+                  <span>{(fs.needs_review ?? 0)} remaining</span>
+                </div>
               </div>
-              <p className="mt-2 text-xs text-muted">
-                Figures in newer documents that disagree with earlier records for the
-                same mine or block.
-              </p>
-              {anomalies.data && anomalies.data.items.length > 0 && (
-                <ul className="mt-2 space-y-1">
-                  {anomalies.data.items.slice(0, 3).map((a) => (
-                    <li key={a.id} className="flex items-start gap-2 text-xs">
-                      <span
-                        className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
-                          a.severity === "high"
-                            ? "bg-danger"
-                            : a.severity === "medium"
-                              ? "bg-warn"
-                              : "bg-muted"
-                        }`}
-                      />
-                      <span className="min-w-0 truncate">{a.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              </Link>
-            </div>
-          )}
+            )}
+          </div>
         </Col>
 
         <Col span={4}>
-          <Panel
-            title="What's in the collection"
-            hint="documents by processing state"
-            className="h-full"
-          >
-            <BarList
-              data={Object.entries(o?.documents_by_status ?? {})
-                .sort((a, b) => b[1] - a[1])
-                .map(([k, v]) => ({ label: statusLabel(k), value: v }))}
-            />
-          </Panel>
+          <CollectionBreakdown o={o} />
         </Col>
       </Grid>
+
+      {/* ── Platform counts quick reference ──────────────────────── */}
+      {o && (
+        <div className="cm-card p-3">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted">
+            Platform overview
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+            {[
+              { label: "KG entities", value: o.kg_entities },
+              { label: "KG links", value: o.kg_relations },
+              { label: "Passages", value: o.doc_chunks },
+              { label: "Topics", value: o.topics },
+              { label: "Subsidiaries", value: o.subsidiaries },
+              { label: "Users", value: o.users },
+              { label: "Awaiting review", value: o.review_queue },
+              { label: "Questions asked", value: sum(o.qa_by_status) },
+            ].map(({ label, value }) => (
+              <div key={label} className="text-center">
+                <div className="text-[15px] font-bold tabular-nums">{value ?? 0}</div>
+                <div className="text-[10px] text-muted">{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </Page>
   );
 }

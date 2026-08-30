@@ -5,103 +5,88 @@ function sum(rec: Record<string, number> | undefined): number {
   return Object.values(rec ?? {}).reduce((a, b) => a + b, 0);
 }
 
-interface Stage {
-  label: string;
-  value: number;
-  sub: string;
-  to: string;
-  color: string;
-}
-
-function StageCard({ s }: { s: Stage }) {
-  return (
-    <Link
-      to={s.to}
-      className="group flex min-w-[8.5rem] flex-1 flex-col rounded-xl border border-border bg-surface p-3 transition-colors hover:border-brand"
-    >
-      <span className="h-1 w-8 rounded-full" style={{ background: s.color }} />
-      <span className="mt-2 text-2xl font-semibold tabular-nums leading-none">{s.value}</span>
-      <span className="mt-1 text-xs font-medium">{s.label}</span>
-      <span className="mt-0.5 text-[11px] text-muted">{s.sub}</span>
-    </Link>
-  );
-}
-
-function Arrow() {
-  return (
-    <span className="hidden shrink-0 self-center text-border sm:block" aria-hidden>
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <path
-          d="M4 11h13M12 6l5 5-5 5"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  );
-}
-
-/** The whole platform in one line: documents flow left-to-right into facts,
- *  reports and answers. Every stage links to the screen that owns it. */
 export function PipelineFlow({ o }: { o: AdminOverview | undefined }) {
   const fieldsTotal = sum(o?.fields_by_status);
   const confirmed =
     (o?.fields_by_status?.auto_accepted ?? 0) + (o?.fields_by_status?.verified ?? 0);
   const outputs = sum(o?.reports_by_status) + (o?.qa_by_status?.verified ?? 0);
 
-  const stages: Stage[] = [
+  const steps = [
     {
       label: "Documents",
-      value: sum(o?.documents_by_status),
+      value: sum(o?.documents_by_status) || "—",
       sub: "uploaded",
-      to: "/ingestion",
       color: "rgb(var(--k-1))",
+      to: "/ingestion",
     },
     {
       label: "Values found",
-      value: fieldsTotal,
-      sub: "pulled from the text",
-      to: "/ingestion",
+      value: fieldsTotal || "—",
+      sub: "extracted from text",
       color: "rgb(var(--k-2))",
+      to: "/ingestion",
     },
     {
       label: "Confirmed",
-      value: confirmed,
-      sub: `${o?.review_queue ?? 0} still to review`,
-      to: "/ingestion",
+      value: confirmed || "—",
+      sub: `${o?.review_queue ?? 0} pending review`,
       color: "rgb(var(--k-6))",
+      to: "/ingestion",
     },
     {
-      label: "In the graph",
-      value: o?.kg_entities ?? 0,
+      label: "In graph",
+      value: o?.kg_entities ?? "—",
       sub: `${o?.kg_relations ?? 0} links`,
-      to: "/knowledge",
       color: "rgb(var(--k-4))",
+      to: "/knowledge",
     },
     {
-      label: "Used in",
-      value: outputs,
-      sub: "reports & saved answers",
-      to: "/reports",
+      label: "Outputs",
+      value: outputs || "—",
+      sub: "reports & answers",
       color: "rgb(var(--k-3))",
+      to: "/reports",
     },
   ];
 
   return (
-    <div className="rounded-xl border border-border bg-surface-2/50 p-4">
-      <h2 className="text-sm font-semibold">How a document becomes an answer</h2>
-      <p className="mt-0.5 text-xs text-muted">
-        Every file moves left to right. Nothing uncertain passes the “Confirmed” step
-        without a person.
-      </p>
-      <div className="mt-3 flex flex-col gap-2 overflow-x-auto sm:flex-row sm:items-stretch">
-        {stages.map((s, i) => (
-          <div key={s.label} className="flex flex-1 gap-2">
-            <StageCard s={s} />
-            {i < stages.length - 1 && <Arrow />}
+    <div className="cm-card overflow-hidden">
+      <div className="border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-[13px] font-semibold">Document pipeline</h2>
+            <p className="mt-0.5 text-[11px] text-muted">
+              Every file flows left → right. Nothing uncertain passes Confirmed without a person.
+            </p>
           </div>
+          <Link to="/ingestion" className="text-[11px] text-brand hover:underline">
+            View all →
+          </Link>
+        </div>
+      </div>
+      <div className="grid grid-cols-5 divide-x divide-border">
+        {steps.map((s, i) => (
+          <Link
+            key={s.label}
+            to={s.to}
+            className="group flex flex-col gap-1 p-3 transition-colors hover:bg-surface-2"
+          >
+            <span
+              className="h-0.5 w-8 rounded-full transition-all duration-150 group-hover:w-full"
+              style={{ background: s.color }}
+            />
+            <span
+              className="metric-lg tabular-nums mt-1.5"
+              style={{ color: s.color }}
+            >
+              {s.value}
+            </span>
+            <span className="text-[12px] font-medium text-fg">{s.label}</span>
+            <span className="text-[11px] text-muted">{s.sub}</span>
+            {i < steps.length - 1 && (
+              <span className="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:block text-border opacity-0">→</span>
+            )}
+          </Link>
         ))}
       </div>
     </div>

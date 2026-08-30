@@ -3,63 +3,191 @@
 @tailwind utilities;
 
 /*
- * Semantic color tokens. Values are "R G B" triplets so Tailwind's
- * `rgb(var(--token) / <alpha-value>)` works. Light theme on :root,
- * dark theme under .dark (toggled on <html>).
- * These are a sane neutral government-dashboard baseline; a ui-ux-pro-max
- * design pass replaces them with the finalized palette in a later milestone.
+ * CoalMind AI — Design System v2
+ * Semantic color tokens as "R G B" triplets for Tailwind alpha support.
+ * Light theme on :root, dark theme under .dark (toggled on <html>).
  */
 :root {
-  --c-bg: 247 248 250;
-  --c-surface: 255 255 255;
-  --c-surface-2: 240 243 247;
-  --c-border: 224 228 235;
-  --c-fg: 20 27 42;
-  --c-muted: 100 112 133;
-  --c-brand: 29 78 216; /* blue-700 */
-  --c-brand-fg: 255 255 255;
-  --c-ok: 21 128 61; /* green-700 */
-  --c-warn: 180 83 9; /* amber-700 */
-  --c-danger: 185 28 28; /* red-700 */
+  /* backgrounds */
+  --c-bg:        245 246 250;   /* cool off-white page background */
+  --c-surface:   255 255 255;   /* card / panel surfaces */
+  --c-surface-2: 237 240 247;   /* subtle inset / input / hover */
+  --c-surface-3: 228 232 242;   /* deeper inset (table stripes) */
 
-  /* categorical palette for charts / entity kinds — colour-blind-considerate */
-  --k-1: 29 78 216; /* blue    */
-  --k-2: 13 148 136; /* teal    */
-  --k-3: 180 83 9; /* amber   */
-  --k-4: 124 58 237; /* violet  */
-  --k-5: 190 24 93; /* pink    */
-  --k-6: 21 128 61; /* green   */
-  --k-7: 71 85 105; /* slate   */
+  /* borders */
+  --c-border:    215 221 232;
+
+  /* text */
+  --c-fg:        14 22 38;      /* near-black primary text */
+  --c-muted:     88 103 126;    /* secondary / descriptive text */
+  --c-faint:     148 161 184;   /* placeholder / disabled */
+
+  /* brand — CIL blue */
+  --c-brand:     24 64 196;
+  --c-brand-lt:  235 241 255;   /* brand tint for highlights */
+  --c-brand-fg:  255 255 255;
+
+  /* semantic states */
+  --c-ok:        16 110 52;
+  --c-ok-lt:     220 243 231;
+  --c-warn:      160 72 0;
+  --c-warn-lt:   255 238 213;
+  --c-danger:    179 22 22;
+  --c-danger-lt: 255 226 226;
+  --c-info:      14 116 144;
+  --c-info-lt:   207 244 252;
+
+  /* chart categorical palette — colour-blind-friendly */
+  --k-1: 24  64  196;  /* brand blue  */
+  --k-2: 14 148 136;   /* teal        */
+  --k-3: 160  72   0;  /* amber       */
+  --k-4: 112  40 218;  /* violet      */
+  --k-5: 190  24  93;  /* rose        */
+  --k-6: 16  110  52;  /* green       */
+  --k-7: 60   80 108;  /* slate       */
+
+  /* spacing / radius / shadow scale */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+
+  --shadow-xs: 0 1px 2px 0 rgb(14 22 38 / 0.04);
+  --shadow-sm: 0 1px 4px 0 rgb(14 22 38 / 0.07), 0 0 0 1px rgb(14 22 38 / 0.04);
+  --shadow-md: 0 4px 12px 0 rgb(14 22 38 / 0.10), 0 0 0 1px rgb(14 22 38 / 0.04);
+  --shadow-lg: 0 8px 24px 0 rgb(14 22 38 / 0.14), 0 0 0 1px rgb(14 22 38 / 0.04);
 }
 
 .dark {
-  --c-bg: 13 17 27;
-  --c-surface: 24 30 43;
-  --c-surface-2: 33 41 57;
-  --c-border: 42 51 68;
-  --c-fg: 235 239 245;
-  --c-muted: 148 160 180;
-  --c-brand: 96 165 250; /* blue-400 */
-  --c-brand-fg: 12 17 27;
-  --c-ok: 74 222 128;
-  --c-warn: 251 191 36;
-  --c-danger: 248 113 113;
+  --c-bg:        11 14 23;
+  --c-surface:   18 24 38;
+  --c-surface-2: 26 34 52;
+  --c-surface-3: 33 43 64;
+  --c-border:    40 52 74;
+  --c-fg:        228 234 244;
+  --c-muted:     140 156 182;
+  --c-faint:     88 103 126;
 
-  --k-1: 96 165 250;
-  --k-2: 45 212 191;
-  --k-3: 251 191 36;
-  --k-4: 167 139 250;
-  --k-5: 244 114 182;
-  --k-6: 74 222 128;
-  --k-7: 148 163 184;
+  --c-brand:     90 156 248;
+  --c-brand-lt:  17 34 78;
+  --c-brand-fg:  10 16 30;
+
+  --c-ok:        56 211 115;
+  --c-ok-lt:     11 46 28;
+  --c-warn:      248 180 30;
+  --c-warn-lt:   50 34 4;
+  --c-danger:    248 100 100;
+  --c-danger-lt: 56 12 12;
+  --c-info:      34 211 238;
+  --c-info-lt:   7 30 40;
+
+  --k-1:  90 156 248;
+  --k-2:  42 200 180;
+  --k-3: 248 180  30;
+  --k-4: 160 130 248;
+  --k-5: 244 100 168;
+  --k-6:  56 211 115;
+  --k-7: 140 156 182;
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 4px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.03);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.04);
 }
 
-html,
-body,
-#root {
+/* ── Layout ───────────────────────────────────────────────── */
+html, body, #root {
   height: 100%;
 }
 
 body {
   @apply bg-bg text-fg font-sans antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 6px; height: 6px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: rgb(var(--c-border)); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover  { background: rgb(var(--c-faint)); }
+
+/* ── Focus ring ────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgb(var(--c-brand));
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Utility classes not in Tailwind config ─────────────────── */
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+/* Card component base */
+.cm-card {
+  background: rgb(var(--c-surface));
+  border: 1px solid rgb(var(--c-border));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Metric number displays */
+.metric-xl  { font-size: 2rem;   font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+.metric-lg  { font-size: 1.5rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.metric-md  { font-size: 1.125rem; font-weight: 600; line-height: 1; letter-spacing: -0.01em; }
+
+/* Pill / badge */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Trend arrow helper */
+.trend-up   { color: rgb(var(--c-ok)); }
+.trend-down { color: rgb(var(--c-danger)); }
+.trend-flat { color: rgb(var(--c-faint)); }
+
+/* Table helpers */
+.cm-table { width: 100%; font-size: 0.8125rem; }
+.cm-table thead th {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(var(--c-muted));
+  border-bottom: 1px solid rgb(var(--c-border));
+  text-align: left;
+  white-space: nowrap;
+}
+.cm-table tbody tr {
+  border-bottom: 1px solid rgb(var(--c-border) / 0.5);
+  transition: background 0.1s;
+}
+.cm-table tbody tr:last-child { border-bottom: none; }
+.cm-table tbody tr:hover { background: rgb(var(--c-surface-2)); }
+.cm-table td { padding: 0.5rem 0.75rem; vertical-align: middle; }
+
+/* Animated shimmer for loading states */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200%  0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--c-surface-2)) 25%,
+    rgb(var(--c-surface-3)) 50%,
+    rgb(var(--c-surface-2)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
 }

@@ -2,120 +2,190 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { EvalReport } from "@/lib/types";
 import { docTypeLabel } from "@/lib/labels";
-import { BarList, Panel } from "@/components/charts";
-import { Page, PageHeader } from "@/components/layout";
-import { Card, EmptyState } from "@/components/primitives";
+import { BarList, Panel, RadialProgress } from "@/components/charts";
+import { Col, Grid, Page, PageHeader } from "@/components/layout";
+import { Card, CardHeader, EmptyState, SkeletonRows } from "@/components/primitives";
 
+/* ── Helpers ─────────────────────────────────────────────────────────── */
 function pct(n: number): string {
   return `${Math.round(n * 100)}%`;
 }
 
-function StatTile({
+/* ── Metric card with radial gauge ──────────────────────────────────── */
+function MetricGauge({
   value,
   label,
-  tone = "fg",
+  sub,
+  tone,
+  target,
 }: {
-  value: string;
+  value: number;   // 0-1
   label: string;
-  tone?: "fg" | "ok" | "warn";
+  sub?: string;
+  tone?: "ok" | "warn" | "danger";
+  target?: number; // 0-1 threshold line
 }) {
-  const color = tone === "ok" ? "text-ok" : tone === "warn" ? "text-warn" : "text-fg";
+  const color =
+    tone === "ok"
+      ? "rgb(var(--c-ok))"
+      : tone === "warn"
+        ? "rgb(var(--c-warn))"
+        : tone === "danger"
+          ? "rgb(var(--c-danger))"
+          : undefined;
+
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <div className={`text-2xl font-semibold tabular-nums ${color}`}>{value}</div>
-      <div className="mt-1 text-xs text-muted">{label}</div>
+    <div className="cm-card flex flex-col items-center gap-2 p-4 text-center">
+      <RadialProgress value={value} size={80} strokeWidth={10} color={color} />
+      <div>
+        <div className="text-[13px] font-semibold">{label}</div>
+        {sub && <div className="mt-0.5 text-[11px] text-muted leading-snug">{sub}</div>}
+        {target != null && (
+          <div className={`mt-1 text-[10.5px] font-medium ${value >= target ? "text-ok" : "text-danger"}`}>
+            Target: ≥{pct(target)} — {value >= target ? "✓ met" : "✗ missed"}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
+/* ── Pass/fail pill ──────────────────────────────────────────────────── */
+function PassPill({ pass }: { pass: boolean }) {
+  return (
+    <span className={`pill border ${pass ? "bg-ok-lt text-ok border-ok/20" : "bg-danger-lt text-danger border-danger/20"}`}>
+      {pass ? "✓ Pass" : "✗ Over"}
+    </span>
+  );
+}
+
+/* ── Test status pill ─────────────────────────────────────────────────── */
+function TestPill({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <span className="text-[12.5px] text-muted">{label}</span>
+      <span className={`pill border ${ok ? "bg-ok-lt text-ok border-ok/20" : "bg-danger-lt text-danger border-danger/20"}`}>
+        {ok ? "● green" : "● failing"}
+      </span>
+    </div>
+  );
+}
+
+/* ── Extraction section ──────────────────────────────────────────────── */
 function ExtractionSection({ e }: { e: EvalReport }) {
   const o = e.overall;
   const rows = e.documents;
+
   return (
     <div className="space-y-4">
+      {/* Four gauges */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile
-          value={pct(e.classification_accuracy)}
-          label={`document type identified — ${o.docs}/${o.docs} correct`}
+        <MetricGauge
+          value={e.classification_accuracy}
+          label="Doc type accuracy"
+          sub={`${o.docs} documents classified`}
           tone={e.classification_accuracy >= 1 ? "ok" : "warn"}
+          target={1}
         />
-        <StatTile
-          value={o.f1.toFixed(2)}
-          label="field precision / recall (F1) on the fields the extractor targets"
-          tone={o.f1 >= 0.9 ? "ok" : "warn"}
+        <MetricGauge
+          value={o.f1}
+          label="F1 score"
+          sub="precision × recall on targeted fields"
+          tone={o.f1 >= 0.9 ? "ok" : o.f1 >= 0.7 ? "warn" : "danger"}
+          target={0.9}
         />
-        <StatTile
-          value={pct(o.coverage)}
-          label={`of ground-truth fields are targeted (${o.gt_fields_in_scope}/${o.gt_fields_total})`}
+        <MetricGauge
+          value={o.coverage}
+          label="Field coverage"
+          sub={`${o.gt_fields_in_scope}/${o.gt_fields_total} ground-truth fields targeted`}
+          tone={o.coverage >= 0.8 ? "ok" : "warn"}
         />
-        <StatTile
-          value={pct(o.effective_accuracy)}
-          label="effective accuracy once the review queue catches low-confidence values"
+        <MetricGauge
+          value={o.effective_accuracy}
+          label="Effective accuracy"
+          sub="once review queue catches low-confidence values"
           tone={o.effective_accuracy >= 0.95 ? "ok" : "warn"}
+          target={0.95}
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Accuracy by document quality" hint="clean digital PDFs vs degraded scans">
-          <BarList
-            max={1}
-            format={pct}
-            data={[
-              { label: "Digital documents (F1)", value: e.digital.f1, color: "rgb(var(--c-ok))" },
-              e.degraded
-                ? {
-                    label: "Degraded scans (F1)",
-                    value: e.degraded.f1,
-                    color: "rgb(var(--c-warn))",
-                  }
-                : { label: "Degraded scans", value: 0 },
-            ]}
-          />
-          <p className="mt-3 text-xs text-muted">
-            {o.silent_errors} silent errors · {o.silent_misses} silent misses — the review
-            queue is the safety net for everything else.
-          </p>
-        </Panel>
+      <Grid>
+        {/* Quality by doc type */}
+        <Col span={6}>
+          <Panel title="Accuracy by document quality" hint="clean PDFs vs degraded scans">
+            <BarList
+              max={1}
+              format={pct}
+              data={[
+                { label: "Digital (F1)", value: e.digital.f1, color: "rgb(var(--c-ok))" },
+                ...(e.degraded
+                  ? [{ label: "Degraded scans (F1)", value: e.degraded.f1, color: "rgb(var(--c-warn))" }]
+                  : []),
+              ]}
+            />
+            <div className="mt-3 flex gap-4 text-[12px]">
+              <div>
+                <span className="text-muted">Silent errors</span>
+                <span className="ml-1.5 font-semibold tabular-nums">{o.silent_errors}</span>
+              </div>
+              <div>
+                <span className="text-muted">Silent misses</span>
+                <span className="ml-1.5 font-semibold tabular-nums">{o.silent_misses}</span>
+              </div>
+            </div>
+            <p className="mt-2 text-[11.5px] text-muted">
+              The review queue is the safety net — every low-confidence value must be
+              human-confirmed before use.
+            </p>
+          </Panel>
+        </Col>
 
-        <Panel title="Per document" hint={`${rows.length} sample documents`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="text-muted">
-                <tr className="text-left">
-                  <th className="py-1 pr-3 font-medium">Document</th>
-                  <th className="py-1 pr-3 font-medium">Type</th>
-                  <th className="py-1 font-medium">Fields correct</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((d) => {
-                  const scope = d.fields.filter((f) => f.in_scope);
-                  const ok = scope.filter((f) => f.correct).length;
-                  return (
-                    <tr key={d.name} className="border-t border-border/50">
-                      <td className="py-1 pr-3">{d.name}</td>
-                      <td className="py-1 pr-3">
-                        <span className={d.doc_type.ok ? "text-ok" : "text-danger"}>
-                          {docTypeLabel(d.doc_type.pred)}
-                        </span>
-                      </td>
-                      <td className="py-1 tabular-nums">
-                        <span className={ok === scope.length ? "text-ok" : "text-warn"}>
-                          {ok}/{scope.length}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-      </div>
+        {/* Per document table */}
+        <Col span={6}>
+          <Panel title="Per document" hint={`${rows.length} sample documents`}>
+            <div className="overflow-x-auto">
+              <table className="cm-table">
+                <thead>
+                  <tr>
+                    <th>Document</th>
+                    <th>Type</th>
+                    <th className="text-right">Fields correct</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((d) => {
+                    const scope = d.fields.filter((f) => f.in_scope);
+                    const ok    = scope.filter((f) => f.correct).length;
+                    const allOk = ok === scope.length;
+                    return (
+                      <tr key={d.name}>
+                        <td className="max-w-[180px]">
+                          <span className="truncate block text-[12px]">{d.name}</span>
+                        </td>
+                        <td>
+                          <span className={`text-[12px] ${d.doc_type.ok ? "text-ok" : "text-danger"}`}>
+                            {docTypeLabel(d.doc_type.pred)}
+                          </span>
+                        </td>
+                        <td className="text-right tabular-nums">
+                          <span className={`text-[12px] font-semibold ${allOk ? "text-ok" : "text-warn"}`}>
+                            {ok}/{scope.length}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        </Col>
+      </Grid>
     </div>
   );
 }
 
+/* ── Main ────────────────────────────────────────────────────────────── */
 export function ValidationPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["validation"],
@@ -125,74 +195,81 @@ export function ValidationPage() {
   return (
     <Page>
       <PageHeader title="Validation">
-        How the platform&rsquo;s accuracy and speed were measured. Extraction is scored
-        live against a hand-written answer key for the sample corpus; performance is from
-        the last benchmark run.
+        How the platform's accuracy and speed were measured. Extraction is scored live
+        against a hand-written answer key; performance is from the last benchmark run.
       </PageHeader>
 
-      {isLoading && <Card className="p-6"><EmptyState>Running the checks…</EmptyState></Card>}
-      {isError && (
-        <Card className="p-6">
-          <EmptyState>Couldn&rsquo;t load the validation summary.</EmptyState>
+      {isLoading && (
+        <Card padding={false}>
+          <CardHeader title="Loading validation data…" />
+          <SkeletonRows rows={6} />
         </Card>
       )}
 
+      {isError && (
+        <div className="cm-card p-10 text-center">
+          <EmptyState>Couldn't load the validation summary.</EmptyState>
+        </div>
+      )}
+
       {data && (
-        <>
+        <div className="space-y-4">
+          {/* ── Extraction accuracy ─────────────────────────── */}
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold">Extraction accuracy</h2>
+            <h2 className="text-[11.5px] font-semibold uppercase tracking-widest text-muted">
+              Extraction accuracy
+            </h2>
             {data.extraction && "overall" in data.extraction ? (
               <ExtractionSection e={data.extraction as EvalReport} />
             ) : (
-              <Card className="p-6">
+              <div className="cm-card p-8 text-center">
                 <EmptyState>
-                  The sample corpus hasn&rsquo;t been generated — run{" "}
-                  <code className="font-mono">python scripts/dev.py corpus</code>.
+                  Sample corpus not generated — run{" "}
+                  <code className="font-mono text-[12px]">python scripts/dev.py corpus</code>.
                 </EmptyState>
-              </Card>
+              </div>
             )}
           </section>
 
+          {/* ── Response times ──────────────────────────────── */}
           <Panel
-            title="Response time"
-            hint="p50 / p95 from the last benchmark; PRD rows must beat their target"
+            title="Response times"
+            hint="p50 / p95 from the last benchmark — PRD rows must beat their target"
           >
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs text-muted">
-                  <tr className="text-left">
-                    <th className="py-1.5 pr-4 font-medium">Path</th>
-                    <th className="py-1.5 pr-4 font-medium tabular-nums">p50</th>
-                    <th className="py-1.5 pr-4 font-medium tabular-nums">p95</th>
-                    <th className="py-1.5 pr-4 font-medium tabular-nums">Target</th>
-                    <th className="py-1.5 font-medium">Result</th>
+              <table className="cm-table">
+                <thead>
+                  <tr>
+                    <th>Endpoint</th>
+                    <th className="text-right">p50</th>
+                    <th className="text-right">p95</th>
+                    <th className="text-right">Target</th>
+                    <th>Result</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.performance.map((r) => {
                     const pass = r.p95_ms <= r.target_ms;
                     return (
-                      <tr key={r.path} className="border-t border-border/60">
-                        <td className="py-1.5 pr-4">
-                          {r.path}
+                      <tr key={r.path}>
+                        <td>
+                          <span className="font-mono text-[11.5px]">{r.path}</span>
                           {r.prd && (
-                            <span className="ml-2 rounded bg-brand/15 px-1.5 text-[10px] text-brand">
+                            <span className="ml-2 pill bg-brand-lt text-brand text-[10px]">
                               PRD
                             </span>
                           )}
                         </td>
-                        <td className="py-1.5 pr-4 tabular-nums text-muted">
+                        <td className="text-right tabular-nums text-muted">
                           {(r.p50_ms / 1000).toFixed(2)}s
                         </td>
-                        <td className="py-1.5 pr-4 tabular-nums">
+                        <td className="text-right tabular-nums font-medium">
                           {(r.p95_ms / 1000).toFixed(2)}s
                         </td>
-                        <td className="py-1.5 pr-4 tabular-nums text-muted">
-                          &lt; {(r.target_ms / 1000).toFixed(0)}s
+                        <td className="text-right tabular-nums text-muted">
+                          &lt;{(r.target_ms / 1000).toFixed(0)}s
                         </td>
-                        <td className={`py-1.5 ${pass ? "text-ok" : "text-danger"}`}>
-                          {pass ? "within budget" : "over"}
-                        </td>
+                        <td><PassPill pass={pass} /></td>
                       </tr>
                     );
                   })}
@@ -201,63 +278,59 @@ export function ValidationPage() {
             </div>
           </Panel>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          {/* ── Load + tests row ────────────────────────────── */}
+          <Grid>
             {data.load && (
-              <Panel title="Under load" hint="concurrent requests, in-process">
-                <ul className="space-y-1.5 text-sm">
-                  <li className="flex justify-between">
-                    <span className="text-muted">Concurrent users</span>
-                    <span className="tabular-nums font-medium">{data.load.concurrency}</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-muted">Question response, p95</span>
-                    <span className="tabular-nums font-medium">
-                      {(data.load.query_p95_ms / 1000).toFixed(2)}s
-                    </span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-muted">Throughput</span>
-                    <span className="tabular-nums font-medium">{data.load.query_rps}/s</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-muted">Errors</span>
-                    <span
-                      className={`tabular-nums font-medium ${
-                        data.load.errors === 0 ? "text-ok" : "text-danger"
-                      }`}
-                    >
-                      {data.load.errors}
-                    </span>
-                  </li>
-                </ul>
-              </Panel>
+              <Col span={6}>
+                <Panel title="Under load" hint="concurrent requests (in-process benchmark)">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Concurrent users", value: `${data.load.concurrency}` },
+                      { label: "Query p95",         value: `${(data.load.query_p95_ms / 1000).toFixed(2)}s` },
+                      { label: "Throughput",        value: `${data.load.query_rps}/s` },
+                      {
+                        label: "Errors",
+                        value: `${data.load.errors}`,
+                        tone: data.load.errors === 0 ? "ok" : "danger",
+                      },
+                    ].map(({ label, value, tone }) => (
+                      <div key={label} className="rounded-lg bg-surface-2/60 p-3">
+                        <div className={`metric-md tabular-nums ${tone === "ok" ? "text-ok" : tone === "danger" ? "text-danger" : "text-fg"}`}>
+                          {value}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-muted">{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+              </Col>
             )}
 
-            <Panel title="Automated checks" hint="run on every change">
-              <ul className="space-y-1.5 text-sm">
-                <li className="flex justify-between">
-                  <span className="text-muted">Backend tests passing</span>
-                  <span className="tabular-nums font-medium text-ok">{data.tests.backend}</span>
-                </li>
-                <li className="flex justify-between">
-                  <span className="text-muted">Frontend build</span>
-                  <span className="font-medium text-ok">
-                    {data.tests.frontend_build ? "green" : "failing"}
-                  </span>
-                </li>
-              </ul>
-              <p className="mt-3 text-xs text-muted">{data.tests.notes}</p>
-            </Panel>
-          </div>
+            <Col span={data.load ? 6 : 12}>
+              <Panel title="Automated checks" hint="run on every change">
+                <div className="divide-y divide-border/60">
+                  <TestPill ok={data.tests.backend > 0} label={`Backend tests (${data.tests.backend} passing)`} />
+                  <TestPill ok={data.tests.frontend_build} label="Frontend build" />
+                </div>
+                {data.tests.notes && (
+                  <p className="mt-3 text-[11.5px] text-muted">{data.tests.notes}</p>
+                )}
+              </Panel>
+            </Col>
+          </Grid>
 
+          {/* ── Methodology ─────────────────────────────────── */}
           <Panel title="How we measured">
-            <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted">
+            <ul className="space-y-2 text-[12.5px] text-muted">
               {data.methodology.map((m, i) => (
-                <li key={i}>{m}</li>
+                <li key={i} className="flex gap-2.5">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand/40" />
+                  {m}
+                </li>
               ))}
             </ul>
           </Panel>
-        </>
+        </div>
       )}
     </Page>
   );
