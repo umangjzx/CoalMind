@@ -191,3 +191,35 @@ body {
   animation: shimmer 1.4s infinite;
   border-radius: var(--radius-sm);
 }
+
+/* ── Report "paper" surface ─────────────────────────────────────────── */
+.report-paper {
+  background: rgb(var(--c-surface));
+  color: rgb(var(--c-fg));
+}
+.report-prose { font-size: 0.875rem; line-height: 1.65; }
+.report-prose h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+.report-prose h2 { font-size: 1.05rem; font-weight: 700; }
+.report-prose h3 { font-size: 0.95rem; font-weight: 600; }
+.report-prose h1, .report-prose h2, .report-prose h3 { color: rgb(var(--c-fg)); }
+
+/* ── Print: show only the report paper, cleanly ─────────────────────── */
+@media print {
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .print-area {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .report-paper {
+    box-shadow: none !important;
+    border: none !important;
+    color: #000 !important;
+    background: #fff !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .report-prose table { border-color: #999 !important; }
+  a[href]::after { content: ""; }
+}

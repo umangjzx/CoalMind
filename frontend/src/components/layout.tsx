@@ -212,6 +212,8 @@ export function Btn({
   variant = "secondary",
   size = "sm",
   className = "",
+  title,
+  type = "button",
 }: {
   children: ReactNode;
   onClick?: () => void;
@@ -219,6 +221,8 @@ export function Btn({
   variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "xs" | "sm" | "md";
   className?: string;
+  title?: string;
+  type?: "button" | "submit" | "reset";
 }) {
   const variants: Record<string, string> = {
     primary: "bg-brand text-brand-fg border-brand hover:bg-brand/90",
@@ -233,8 +237,10 @@ export function Btn({
   };
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={[
         "inline-flex items-center gap-1.5 rounded-md border font-medium transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed",
         variants[variant],

@@ -28,6 +28,7 @@ import type {
   WordCloudResponse,
   ReportListResponse,
   ReportTemplate,
+  ReportVersionT,
   ReviewActionKind,
   ReviewQueueResponse,
   ReviewResult,
@@ -168,6 +169,8 @@ export const api = {
   listReports: (status?: string) =>
     get<ReportListResponse>(`/reports${status ? `?status=${status}` : ""}`),
   getReport: (id: string) => get<ReportDetailT>(`/reports/${id}`),
+  getReportVersion: (id: string, versionNo: number) =>
+    get<ReportVersionT>(`/reports/${id}/versions/${versionNo}`),
   createReport: (body: {
     template_key: string;
     params: Record<string, unknown>;

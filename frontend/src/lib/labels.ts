@@ -31,6 +31,19 @@ export function shortDateTime(iso: string | null | undefined): string {
   });
 }
 
+/** Compact relative time ("just now", "5m ago", "3h ago", "2d ago", then a date). */
+export function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const s = Math.round((Date.now() - d.getTime()) / 1000);
+  if (s < 45) return "just now";
+  if (s < 3600) return `${Math.round(s / 60)}m ago`;
+  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+  if (s < 7 * 86400) return `${Math.round(s / 86400)}d ago`;
+  return shortDate(iso);
+}
+
 const DOC_TYPE_LABELS: Record<string, string> = {
   geological_reserve_status: "Reserve status report",
   monthly_production_mis: "Monthly production (MIS)",
