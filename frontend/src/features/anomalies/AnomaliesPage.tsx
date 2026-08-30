@@ -5,6 +5,7 @@ import type { AnomalyOut, AnomalySeverityT, AnomalyStatusT } from "@/lib/types";
 import { BarList, Panel, SeverityMatrix } from "@/components/charts";
 import { SkeletonRows } from "@/components/primitives";
 import { Btn, Col, Grid, Kpi, KpiRow, Page, PageHeader, TabBar } from "@/components/layout";
+import { shortDate } from "@/lib/labels";
 
 /* ── Constants ───────────────────────────────────────────────────────── */
 const SEV_DOT: Record<AnomalySeverityT, string> = {
@@ -152,7 +153,7 @@ function AnomalyCard({ a }: { a: AnomalyOut }) {
         {a.reviewed_at && (
           <div className="shrink-0 text-[10.5px] text-faint text-right">
             <div>Reviewed</div>
-            <div>{new Date(a.reviewed_at).toLocaleDateString()}</div>
+            <div>{shortDate(a.reviewed_at)}</div>
           </div>
         )}
       </div>
@@ -267,7 +268,7 @@ export function AnomaliesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["anomalies"] }),
   });
 
-  const items = all.data?.items ?? [];
+  const items = useMemo(() => all.data?.items ?? [], [all.data]);
   const shown = useMemo(
     () => (tab === "all" ? items : items.filter((a) => a.status === tab)),
     [items, tab],

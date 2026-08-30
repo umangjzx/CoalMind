@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
+import type { AdminOverview } from "@/lib/types";
 import { DEPENDENCY_LABELS, docTypeLabel, healthWord, statusLabel } from "@/lib/labels";
-import { BarList, Donut, Panel, RadialProgress } from "@/components/charts";
+import { BarList, Donut, Panel } from "@/components/charts";
 import { Col, Grid, Kpi, KpiRow, Page, PageHeader } from "@/components/layout";
 import { PipelineFlow } from "./PipelineFlow";
 
@@ -135,11 +136,11 @@ function AttentionCard({
 }
 
 /* ── Document collection breakdown ──────────────────────────────────── */
-function CollectionBreakdown({ o }: { o: ReturnType<typeof useQuery<any>>["data"] }) {
+function CollectionBreakdown({ o }: { o: AdminOverview | undefined }) {
   const byStatus = o?.documents_by_status ?? {};
   const total = sum(byStatus);
-  const ready = (byStatus.ready ?? 0) + (byStatus.verified ?? 0) + (byStatus.auto_accepted ?? 0);
-  const pctReady = total > 0 ? ready / total : 0;
+  const failed = byStatus.failed ?? 0;
+  const pending = byStatus.needs_review ?? 0;
 
   return (
     <Panel
@@ -147,13 +148,38 @@ function CollectionBreakdown({ o }: { o: ReturnType<typeof useQuery<any>>["data"
       hint={`${total} document${total === 1 ? "" : "s"} by processing state`}
       className="h-full"
       right={
-        <RadialProgress value={pctReady} size={48} strokeWidth={7} label="ready" />
+        <span
+          className={`pill ${
+            failed > 0
+              ? "bg-danger-lt text-danger"
+              : pending > 0
+                ? "bg-warn-lt text-warn"
+                : "bg-ok-lt text-ok"
+          }`}
+        >
+          {failed > 0
+            ? `${failed} failed`
+            : pending > 0
+              ? `${pending} in review`
+              : "all processed"}
+        </span>
       }
     >
       <BarList
         data={Object.entries(byStatus)
           .sort((a, b) => (b[1] as number) - (a[1] as number))
-          .map(([k, v]) => ({ label: statusLabel(k), value: v as number }))}
+          .map(([k, v]) => ({
+            label: statusLabel(k),
+            value: v as number,
+            color:
+              k === "failed"
+                ? "rgb(var(--c-danger))"
+                : k === "needs_review"
+                  ? "rgb(var(--c-warn))"
+                  : k === "ready"
+                    ? "rgb(var(--c-ok))"
+                    : "rgb(var(--c-brand))",
+          }))}
       />
     </Panel>
   );
@@ -237,6 +263,7 @@ function FieldsDonut({
 
 /* ── Main component ──────────────────────────────────────────────────── */
 export function DashboardPage() {
+  const nav = useNavigate();
   const overview = useQuery({ queryKey: ["admin-overview"], queryFn: api.adminOverview });
   const anomalies = useQuery({
     queryKey: ["anomalies", "open"],
@@ -266,6 +293,7 @@ export function DashboardPage() {
           label="Documents"
           value={docCount || "—"}
           sub={`${o?.documents_by_status?.processing ?? 0} processing`}
+          onClick={() => nav("/ingestion")}
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
@@ -277,31 +305,35 @@ export function DashboardPage() {
           value={fieldsTotal || "—"}
           sub={`${fs.needs_review ?? 0} waiting review`}
           tone={fieldsTotal > 0 ? "brand" : "fg"}
+          onClick={() => nav("/knowledge")}
         />
         <Kpi
           label="To review"
           value={reviewCount}
           tone={reviewCount > 0 ? "warn" : "ok"}
           sub={reviewCount > 0 ? "needs attention" : "all clear"}
-          onClick={() => {}}
+          onClick={() => nav("/ingestion")}
         />
         <Kpi
           label="Open anomalies"
           value={anomalies.data ? openAnomalies : "—"}
           tone={openAnomalies > 0 ? "danger" : "ok"}
           sub={highSeverity > 0 ? `${highSeverity} high severity` : "none critical"}
+          onClick={() => nav("/anomalies")}
         />
         <Kpi
           label="Reports"
           value={sum(o?.reports_by_status) || 0}
           sub={`${o?.reports_by_status?.final ?? 0} finalised`}
           tone="fg"
+          onClick={() => nav("/reports")}
         />
         <Kpi
           label="Saved answers"
           value={o?.qa_by_status?.verified ?? 0}
           tone="ok"
           sub="reused instantly"
+          onClick={() => nav("/query")}
         />
       </KpiRow>
 

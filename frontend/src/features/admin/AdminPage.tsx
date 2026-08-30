@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AdminUserRow } from "@/lib/types";
-import { auditActionLabel, docTypeLabel, roleLabel, statusLabel } from "@/lib/labels";
+import { auditActionLabel, docTypeLabel, roleLabel, shortDateTime, statusLabel } from "@/lib/labels";
 import { BarList, Panel, RadialProgress } from "@/components/charts";
 import { Card, CardHeader, EmptyState, SkeletonRows } from "@/components/primitives";
 import { Btn, Col, Grid, Kpi, KpiRow, Page, PageHeader, TabBar } from "@/components/layout";
@@ -331,7 +331,7 @@ function UsersTab() {
                     </td>
                     <td className="tabular-nums text-muted">
                       {u.last_login_at
-                        ? new Date(u.last_login_at).toLocaleString()
+                        ? shortDateTime(u.last_login_at)
                         : <span className="text-faint">Never</span>}
                     </td>
                   </tr>
@@ -388,7 +388,7 @@ function AuditTab() {
                   <tr key={e.seq}>
                     <td className="tabular-nums text-faint">{e.seq}</td>
                     <td className="tabular-nums text-muted whitespace-nowrap">
-                      {new Date(e.at).toLocaleString()}
+                      {shortDateTime(e.at)}
                     </td>
                     <td className="font-medium">{e.actor}</td>
                     <td>{auditActionLabel(e.action)}</td>

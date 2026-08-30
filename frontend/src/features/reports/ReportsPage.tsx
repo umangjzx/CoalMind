@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { ReportT } from "@/lib/types";
-import { reportTemplateLabel } from "@/lib/labels";
+import { reportTemplateLabel, shortDate } from "@/lib/labels";
 import { Donut, Panel } from "@/components/charts";
 import { Card, CardHeader, EmptyState, SkeletonRows, StatusPill } from "@/components/primitives";
 import { Col, Grid, Kpi, KpiRow, Page, PageHeader } from "@/components/layout";
@@ -66,9 +66,7 @@ function ReportListItem({
   active: boolean;
   onClick: () => void;
 }) {
-  const ago = new Date(r.created_at ?? "").toLocaleDateString("en-IN", {
-    day: "numeric", month: "short",
-  });
+  const ago = shortDate(r.created_at);
 
   return (
     <button
@@ -212,11 +210,7 @@ function Landing({ onPick }: { onPick: (id: string) => void }) {
                     </td>
                     <td className="text-muted">{reportTemplateLabel(r.template_key)}</td>
                     <td><StatusPill status={r.status} /></td>
-                    <td className="text-muted tabular-nums">
-                      {new Date(r.created_at ?? "").toLocaleDateString("en-IN", {
-                        day: "numeric", month: "short", year: "2-digit",
-                      })}
-                    </td>
+                    <td className="text-muted tabular-nums">{shortDate(r.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

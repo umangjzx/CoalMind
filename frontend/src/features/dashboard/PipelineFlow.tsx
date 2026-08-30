@@ -64,8 +64,8 @@ export function PipelineFlow({ o }: { o: AdminOverview | undefined }) {
           </Link>
         </div>
       </div>
-      <div className="grid grid-cols-5 divide-x divide-border">
-        {steps.map((s, i) => (
+      <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
+        {steps.map((s) => (
           <Link
             key={s.label}
             to={s.to}
@@ -83,9 +83,6 @@ export function PipelineFlow({ o }: { o: AdminOverview | undefined }) {
             </span>
             <span className="text-[12px] font-medium text-fg">{s.label}</span>
             <span className="text-[11px] text-muted">{s.sub}</span>
-            {i < steps.length - 1 && (
-              <span className="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:block text-border opacity-0">→</span>
-            )}
           </Link>
         ))}
       </div>

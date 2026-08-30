@@ -9,6 +9,28 @@ export function titleCase(s: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** Consistent short date ("14 Aug 2023") for timestamps across the app. */
+export function shortDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Date + time ("14 Aug 2023, 4:32 pm") for the audit log and similar. */
+export function shortDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 const DOC_TYPE_LABELS: Record<string, string> = {
   geological_reserve_status: "Reserve status report",
   monthly_production_mis: "Monthly production (MIS)",

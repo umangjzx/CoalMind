@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { AdminOverview } from "@/lib/types";
 import { Col, Grid, Kpi, KpiRow, Page, PageHeader } from "@/components/layout";
 import { RadialProgress } from "@/components/charts";
 import { Card, CardHeader } from "@/components/primitives";
@@ -14,7 +15,7 @@ function sum(rec: Record<string, number> | undefined): number {
 }
 
 /* ── Mini pipeline progress ─────────────────────────────────────────── */
-function PipelineProgress({ o }: { o: ReturnType<typeof useQuery<any>>["data"]; quality: ReturnType<typeof useQuery<any>>["data"] }) {
+function PipelineProgress({ o }: { o: AdminOverview | undefined }) {
   const byStatus = o?.documents_by_status ?? {};
   const total = sum(byStatus);
   if (total === 0) return null;
@@ -123,7 +124,7 @@ export function IngestionPage() {
       {/* ── Pipeline progress + quality strip ────────────────────── */}
       <Grid>
         <Col span={8}>
-          <PipelineProgress o={o} quality={quality.data} />
+          <PipelineProgress o={o} />
         </Col>
         <Col span={4}>
           <Card padding={false} className="h-full">

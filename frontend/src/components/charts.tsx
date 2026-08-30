@@ -5,17 +5,7 @@
  */
 
 import type { ReactNode } from "react";
-
-/* ── Colour palette (matches index.css --k-n) ────────────────────────── */
-export const KIND_COLOR = [
-  "rgb(var(--k-1))",
-  "rgb(var(--k-2))",
-  "rgb(var(--k-3))",
-  "rgb(var(--k-4))",
-  "rgb(var(--k-5))",
-  "rgb(var(--k-6))",
-  "rgb(var(--k-7))",
-];
+import { KIND_COLOR } from "./chart-colors";
 
 /* ══════════════════════════════════════════════════════════════════════
    PANEL — standard section wrapper

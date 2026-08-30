@@ -410,8 +410,8 @@ SIH26023/
 │   │   │   └── nav.ts               NAV array (label, blurb, milestone, built flag)
 │   │   ├── features/               One folder per screen (dashboard, ingestion, knowledge,
 │   │   │                            reports, query, topics, anomalies, validation, admin, auth)
-│   │   ├── components/             charts.tsx, layout.tsx, primitives.tsx, HealthBadge,
-│   │   │                            ThemeToggle, UserMenu
+│   │   ├── components/             charts.tsx + chart-colors.ts, layout.tsx, primitives.tsx,
+│   │   │                            HealthBadge, ThemeToggle, UserMenu
 │   │   └── lib/                    api.ts (typed client) · auth.ts (token store) ·
 │   │                               types.ts · labels.ts
 │   ├── vite.config.ts               dev proxy /api → 127.0.0.1:8000, @ alias
