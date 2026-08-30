@@ -104,7 +104,7 @@ function StatusDonut({ items }: { items: ReportT[] }) {
   ].filter((s) => s.value > 0);
 
   return (
-    <Panel title="Reports by status" className="h-full">
+    <Panel title="Reports by status">
       <Donut
         segments={segments}
         centerValue={String(items.length)}
@@ -138,7 +138,7 @@ function Landing({ onPick }: { onPick: (id: string) => void }) {
 
       <Grid>
         {/* Report types */}
-        <Col span={8}>
+        <Col span={8} className="lg:self-start">
           <Panel
             title="Report types"
             hint="each template is filled from the confirmed facts in your documents"
@@ -169,7 +169,7 @@ function Landing({ onPick }: { onPick: (id: string) => void }) {
         </Col>
 
         {/* How it works + status donut */}
-        <Col span={4} className="space-y-4">
+        <Col span={4} className="space-y-4 lg:self-start">
           {items.length > 0 && <StatusDonut items={items} />}
           <Panel title="How a report is built">
             <ol className="space-y-3">
